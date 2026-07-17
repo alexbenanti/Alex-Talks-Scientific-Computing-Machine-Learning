@@ -1,0 +1,30 @@
+---
+title: "About"
+image: assets/IMG_3790 2.HEIC
+about:
+  template: jolla
+  image-shape: round
+  links:
+    - icon: github
+      text: GitHub
+      href: "https://github.com/alexbenanti"
+    - icon: envelope
+      text: Email
+      href: "mailto:alexander.benanti@stonybrook.edu"
+---
+
+## About me
+
+I am **Alex Benanti**, an Applied Mathematics PhD researcher at Stony Brook University interested in scientific machine learning, numerical analysis, and computation for partial differential equations.
+
+This blog is intended to be a collection of explanations of traditional methods and ML methods for scientific computing that I have come across in my studies. 
+
+## What you will find here
+
+- derivations connecting modern learning methods to classical applied mathematics;
+- fun experiments with numerical linear algebra and PDEs;
+- careful readings and replications of scientific machine-learning papers.
+
+## A note on corrections
+
+Technical writing improves through scrutiny. Please open an issue in the site repository when you find an error or an unclear argument.

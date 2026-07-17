@@ -1,0 +1,12 @@
+{
+  "hash": "c81d5b64ce8946423bffcb4d0df9952b",
+  "result": {
+    "engine": "jupyter",
+    "markdown": "---\ntitle: \"POST TITLE\"\ndescription: \"One sentence explaining the precise question answered by this post.\"\nauthor: \"Alex Benanti\"\ndate: \"YYYY-MM-DD\"\ndraft: true\ncategories:\n  - scientific machine learning\njupyter: python3\n---\n\nState the question and why it matters.\n\n## Mathematical setup\n\nIntroduce only the notation needed for the argument.\n\n$$\n\\mathcal{F}(u)=0. {#eq-model}\n$$\n\nRefer to @eq-model in the prose.\n\n## Main idea\n\nExplain the mechanism before adding technical detail.\n\n## Computational experiment\n\n::: {#cell-fig-example .cell execution_count=1}\n``` {.python .cell-code}\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nx = np.linspace(0, 1, 200)\nfig, ax = plt.subplots()\nax.plot(x, np.sin(2 * np.pi * x))\nax.set_xlabel(\"x\")\nax.set_ylabel(\"u(x)\")\nfig.tight_layout()\n```\n\n::: {.cell-output .cell-output-display}\n![Replace this caption with a claim the figure actually supports.](index_files/figure-html/fig-example-output-1.png){#fig-example width=662 height=470}\n:::\n:::\n\n\nDiscuss what the experiment shows, what it does not show, and which choices could change the conclusion.\n\n## Limitations\n\nList the assumptions and failure modes explicitly.\n\n## Takeaway\n\nEnd with one precise conclusion.\n\n## References\n\n",
+    "supporting": [
+      "index_files"
+    ],
+    "filters": [],
+    "includes": {}
+  }
+}

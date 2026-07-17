@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-labelledby="title desc">
+  <title id="title">Profile image placeholder</title>
+  <desc id="desc">A geometric placeholder to replace with the author's photograph.</desc>
+  <rect width="640" height="640" fill="#f4f1ea"/>
+  <circle cx="320" cy="250" r="120" fill="#235789" opacity="0.88"/>
+  <path d="M105 620 C125 455 205 390 320 390 C435 390 515 455 535 620" fill="#18212f"/>
+  <path d="M90 90 H550 M90 550 H550" stroke="#d9d5cc" stroke-width="6"/>
+</svg>

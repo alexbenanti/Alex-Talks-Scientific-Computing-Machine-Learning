@@ -1,0 +1,118 @@
+---
+title: "Why a small residual need not mean a small error"
+description: "A two-dimensional example exposes the stability assumption hidden inside residual minimization."
+author: "Alex Benanti"
+date: "2026-07-15"
+draft: true
+categories:
+  - scientific machine learning
+  - numerical analysis
+  - PDEs
+image: thumbnail.svg
+jupyter: python3
+---
+
+Residual minimization is central to many scientific machine-learning methods, including physics-informed neural networks [@raissi2019physics]. It is tempting to read a small equation residual as evidence that the learned solution is accurate. That conclusion needs a stability estimate.
+
+## The residual--error identity
+
+Consider the linear problem
+
+$$
+A u^\star = f,
+$$
+
+and an approximation $u_\theta$. Define its error and residual by
+
+$$
+e = u_\theta-u^\star,
+\qquad
+r = A u_\theta-f.
+$$
+
+Because $A u^\star=f$,
+
+$$
+r=Ae. {#eq-residual-error}
+$$
+
+When $A$ is invertible, @eq-residual-error gives
+
+$$
+\|e\| \leq \|A^{-1}\|\,\|r\|. {#eq-stability-bound}
+$$
+
+The factor $\|A^{-1}\|$ is the missing piece. A residual controls the error only in norms and regimes for which the inverse problem is stable. This is the same conditioning mechanism that connects backward and forward error in numerical linear algebra [@trefethen1997numerical].
+
+## A two-dimensional counterexample
+
+Let
+
+$$
+A_\varepsilon =
+\begin{pmatrix}
+1 & 0 \\
+0 & \varepsilon
+\end{pmatrix},
+\qquad
+f=0,
+\qquad
+u_\theta=
+\begin{pmatrix}
+0 \\
+1
+\end{pmatrix}.
+$$
+
+The exact solution is $u^\star=0$, so $\|e\|_2=1$. But
+
+$$
+r=A_\varepsilon e=
+\begin{pmatrix}
+0 \\
+\varepsilon
+\end{pmatrix},
+\qquad
+\|r\|_2=\varepsilon.
+$$
+
+The residual can therefore be arbitrarily small while the error remains one. The approximation hides entirely in the weakly observed direction of the operator.
+
+```{python}
+#| label: fig-residual-error
+#| fig-cap: "The residual vanishes with ε, while the approximation error stays fixed."
+#| warning: false
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+epsilon = np.logspace(-8, 0, 200)
+residual = epsilon
+error = np.ones_like(epsilon)
+
+fig, ax = plt.subplots()
+ax.loglog(epsilon, residual, label=r"$\|r\|_2$")
+ax.loglog(epsilon, error, "--", label=r"$\|e\|_2$")
+ax.set_xlabel(r"$\varepsilon$")
+ax.set_ylabel("norm")
+ax.legend()
+ax.grid(True, which="both", alpha=0.25)
+fig.tight_layout()
+```
+
+## What this means for scientific ML
+
+The finite-dimensional example is deliberately simple, but its lesson persists for differential operators and inverse problems:
+
+1. **The norm matters.** A small pointwise or sampled residual may not control the solution in the norm relevant to the application.
+2. **Stability matters.** Ill-conditioned or non-identifiable directions can carry large errors with little residual penalty.
+3. **Discretization matters.** A residual evaluated at finitely many collocation points can miss behavior between those points.
+4. **Boundary and initial data matter.** The differential equation alone may not identify the intended solution.
+
+A useful evaluation protocol should therefore report more than the training residual. Depending on the problem, that can include solution error against a trusted reference, conservation defects, boundary-condition error, refinement studies, and estimates of stability or conditioning.
+
+## Takeaway
+
+Residual minimization is a method for enforcing equations. Turning residual control into solution accuracy requires a mathematical bridge: a stability estimate in compatible spaces and norms.
+
+## References

@@ -1,0 +1,44 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Scientific machine learning, carefully",
+    "section": "",
+    "text": "AN APPLIED MATHEMATICS BLOG\n\n\n\nNotes on scientific machine learning, numerical analysis, inverse problems, optimization, and the mathematical structure connecting them.\nRead the latest notes About the author"
+  },
+  {
+    "objectID": "index.html#latest-notes",
+    "href": "index.html#latest-notes",
+    "title": "Scientific machine learning, carefully",
+    "section": "Latest notes",
+    "text": "Latest notes\nEach post aims to state a precise question, develop the minimum mathematical setup, and connect theory with a reproducible computation."
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "I am Alex Benanti, an Applied Mathematics PhD researcher at Stony Brook University interested in scientific machine learning, numerical analysis, and computation for partial differential equations.\nThis blog is intended to be a collection of explanations of traditional methods and ML methods for scientific computing that I have come across in my studies."
+  },
+  {
+    "objectID": "about.html#about-me",
+    "href": "about.html#about-me",
+    "title": "About",
+    "section": "",
+    "text": "I am Alex Benanti, an Applied Mathematics PhD researcher at Stony Brook University interested in scientific machine learning, numerical analysis, and computation for partial differential equations.\nThis blog is intended to be a collection of explanations of traditional methods and ML methods for scientific computing that I have come across in my studies."
+  },
+  {
+    "objectID": "about.html#what-you-will-find-here",
+    "href": "about.html#what-you-will-find-here",
+    "title": "About",
+    "section": "What you will find here",
+    "text": "What you will find here\n\nderivations connecting modern learning methods to classical applied mathematics;\nfun experiments with numerical linear algebra and PDEs;\ncareful readings and replications of scientific machine-learning papers."
+  },
+  {
+    "objectID": "about.html#a-note-on-corrections",
+    "href": "about.html#a-note-on-corrections",
+    "title": "About",
+    "section": "A note on corrections",
+    "text": "A note on corrections\nTechnical writing improves through scrutiny. Please open an issue in the site repository when you find an error or an unclear argument."
+  }
+]

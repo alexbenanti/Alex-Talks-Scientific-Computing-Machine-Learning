@@ -1,0 +1,55 @@
+---
+title: "POST TITLE"
+description: "One sentence explaining the precise question answered by this post."
+author: "Alex Benanti"
+date: "YYYY-MM-DD"
+draft: true
+categories:
+  - scientific machine learning
+jupyter: python3
+---
+
+State the question and why it matters.
+
+## Mathematical setup
+
+Introduce only the notation needed for the argument.
+
+$$
+\mathcal{F}(u)=0. {#eq-model}
+$$
+
+Refer to @eq-model in the prose.
+
+## Main idea
+
+Explain the mechanism before adding technical detail.
+
+## Computational experiment
+
+```{python}
+#| label: fig-example
+#| fig-cap: "Replace this caption with a claim the figure actually supports."
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.linspace(0, 1, 200)
+fig, ax = plt.subplots()
+ax.plot(x, np.sin(2 * np.pi * x))
+ax.set_xlabel("x")
+ax.set_ylabel("u(x)")
+fig.tight_layout()
+```
+
+Discuss what the experiment shows, what it does not show, and which choices could change the conclusion.
+
+## Limitations
+
+List the assumptions and failure modes explicitly.
+
+## Takeaway
+
+End with one precise conclusion.
+
+## References

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss  xmlns:atom="http://www.w3.org/2005/Atom" 
+      xmlns:media="http://search.yahoo.com/mrss/" 
+      xmlns:content="http://purl.org/rss/1.0/modules/content/" 
+      xmlns:dc="http://purl.org/dc/elements/1.1/" 
+      version="2.0">
+<channel>
+<title>Alex Talks Scentific Computing and Machine Learning</title>
+<link>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/</link>
+<atom:link href="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/index.xml" rel="self" type="application/rss+xml"/>
+<description>Mathematical derivations, computational experiments, and critical notes on learning for scientific problems.</description>
+<generator>quarto-1.9.38</generator>
+<lastBuildDate>Fri, 17 Jul 2026 21:23:12 GMT</lastBuildDate>
+</channel>
+</rss>

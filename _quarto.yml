@@ -1,0 +1,51 @@
+project:
+  type: website
+  output-dir: docs
+
+bibliography: references.bib
+
+website:
+  title: "Alex Talks Scentific Computing and Machine Learning"
+  site-url: "https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/"
+  description: "Here to discuss all things scientific computing and SciML."
+  favicon: assets/favicon.svg
+  open-graph: true
+  twitter-card: true
+  search: true
+  back-to-top-navigation: true
+  navbar:
+    left:
+      - text: "Posts"
+        href: index.qmd
+      - text: "About"
+        href: about.qmd
+    right:
+      - icon: github
+        href: "https://github.com/alexbenanti/Alex-Talks-Scientific-Computing-Machine-Learning"
+        aria-label: "GitHub repository"
+      - icon: rss
+        href: index.xml
+        aria-label: "RSS feed"
+  page-footer:
+    left: "© 2026 Alex Benanti"
+    right:
+      - text: "Built with Quarto"
+        href: "https://quarto.org/"
+
+format:
+  html:
+    theme:
+      light: cosmo
+      dark: darkly
+    css: styles.css
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-overflow: wrap
+    anchor-sections: true
+    smooth-scroll: true
+    link-external-newwindow: true
+    html-math-method: katex
+
+execute:
+  freeze: auto

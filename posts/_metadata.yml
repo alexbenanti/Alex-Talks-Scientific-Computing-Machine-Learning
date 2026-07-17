@@ -1,0 +1,8 @@
+# Options shared by every post in this directory.
+freeze: true
+citation: true
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the computation"
+    toc: true

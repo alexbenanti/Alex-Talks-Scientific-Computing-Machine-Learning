@@ -1,0 +1,137 @@
+/* A restrained academic style using only local system fonts. */
+
+:root {
+  --sciml-ink: #18212f;
+  --sciml-muted: #5f6875;
+  --sciml-paper: #fbfaf7;
+  --sciml-accent: #235789;
+  --sciml-rule: #d9d5cc;
+}
+
+body.quarto-dark {
+  --sciml-ink: #f4f1ea;
+  --sciml-muted: #b8bec8;
+  --sciml-paper: #111720;
+  --sciml-accent: #84b6e4;
+  --sciml-rule: #394453;
+}
+
+body {
+  background: var(--sciml-paper);
+  color: var(--sciml-ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.68;
+}
+
+h1, h2, h3, .navbar-brand {
+  color: var(--sciml-ink);
+  letter-spacing: -0.025em;
+}
+
+h1, h2 {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.navbar {
+  border-bottom: 1px solid var(--sciml-rule);
+}
+
+.navbar-brand {
+  font-weight: 700;
+}
+
+.hero {
+  max-width: 980px;
+  margin: 2.5rem auto 4rem;
+  padding: clamp(2rem, 6vw, 5rem);
+  border: 1px solid var(--sciml-rule);
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(35, 87, 137, 0.13), transparent 32%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.75), rgba(244, 241, 234, 0.65));
+}
+
+body.quarto-dark .hero {
+  background:
+    radial-gradient(circle at 90% 10%, rgba(132, 182, 228, 0.14), transparent 32%),
+    linear-gradient(145deg, rgba(24, 33, 47, 0.9), rgba(17, 23, 32, 0.88));
+}
+
+.hero h1 {
+  max-width: 850px;
+  margin-top: 0.35rem;
+  font-size: clamp(2.6rem, 7vw, 5.4rem);
+  line-height: 0.98;
+}
+
+.hero p {
+  max-width: 760px;
+  margin: 1.5rem 0 2rem;
+  color: var(--sciml-muted);
+  font-size: 1.2rem;
+}
+
+.hero-kicker {
+  color: var(--sciml-accent);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.btn-primary {
+  background-color: var(--sciml-accent);
+  border-color: var(--sciml-accent);
+}
+
+.quarto-grid-item {
+  border-color: var(--sciml-rule) !important;
+  border-radius: 0.9rem !important;
+  overflow: hidden;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.quarto-grid-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(24, 33, 47, 0.09);
+}
+
+.quarto-title .quarto-categories .quarto-category {
+  border-color: var(--sciml-rule);
+  color: var(--sciml-muted);
+}
+
+code {
+  font-size: 0.91em;
+}
+
+blockquote {
+  border-left-color: var(--sciml-accent);
+  color: var(--sciml-muted);
+}
+
+#quarto-content main {
+  max-width: 860px;
+}
+
+.page-layout-full #quarto-content main {
+  max-width: none;
+}
+
+@media (max-width: 640px) {
+  .hero {
+    margin-top: 1rem;
+    padding: 1.5rem;
+  }
+
+  .hero .btn {
+    display: block;
+    width: 100%;
+    margin: 0.5rem 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quarto-grid-item {
+    transition: none;
+  }
+}
