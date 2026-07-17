@@ -1,6 +1,6 @@
 ---
-title: "Scientific machine learning, carefully"
-description: "Mathematical derivations, computational experiments, and critical notes on learning for scientific problems."
+title: "Scientific Machine Learning, Computational Science, and Miscellaneous Topics"
+description: "Theory, Applications, and Random Rants on SciML"
 listing:
   contents: posts
   sort: "date desc"
@@ -19,13 +19,13 @@ title-block-banner: false
 AN APPLIED MATHEMATICS BLOG
 :::
 
-# Models, equations, and what can go wrong
+# Machine Learning Methods for Solving Physics Problems
 
-Notes on scientific machine learning, numerical analysis, inverse problems, optimization, and the mathematical structure connecting them.
+Notes on scientific machine learning, numerical analysis, optimization, and the mathematical structure connecting them.
 
 [Read the latest notes](#latest-notes){.btn .btn-primary .btn-lg} [About the author](about.qmd){.btn .btn-outline-secondary .btn-lg}
 :::
 
 ## Latest notes {#latest-notes}
 
-Each post aims to state a precise question, develop the minimum mathematical setup, and connect theory with a reproducible computation.
+Each post aims to cover a specific topic in math, machine learning, computational science, or all of the above!
