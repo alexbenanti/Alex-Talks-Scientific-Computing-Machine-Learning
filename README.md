@@ -6,6 +6,8 @@ Source files for my blog on scientific machine learning, applied mathematics, nu
 
 Visit the published blog:
 
+https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/
+
 ## About
 
 I am an Applied Mathematics PhD student intersted in the mathematical and computational foundations of scientific machine learning. 
