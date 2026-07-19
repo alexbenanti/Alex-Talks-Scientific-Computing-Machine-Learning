@@ -105,10 +105,10 @@
 </div>
 <p>Now, using the right triangle that is formed by the angle and vertical change (demonstrated above) we can observe that:</p>
 <p><img src="https://latex.codecogs.com/png.latex?%5Csin(%5Ctheta)%20=%20%5Cfrac%7Bu_x%7D%7B%5Csqrt%7B1+u_x%5E2%7D%7D,%5Cqquad%20%5Ccos(%5Ctheta)%20=%20%5Cfrac%7B1%7D%7B%5Csqrt%7B1+u_x%5E2%7D%7D."></p>
-<p>Under the small-slope assumption, <img src="https://latex.codecogs.com/png.latex?%7Cu_x%7C%20%5Cll%201">, so we approximate the <img src="https://latex.codecogs.com/png.latex?%5Csin"> and <img src="https://latex.codecogs.com/png.latex?%5Ccos"> values as:</p>
+<p>Under the small-slope assumption, <img src="https://latex.codecogs.com/png.latex?%7Cu_x%7C%20%5Cll%201">, we approximate the <img src="https://latex.codecogs.com/png.latex?%5Csin"> and <img src="https://latex.codecogs.com/png.latex?%5Ccos"> values as:</p>
 <p><img src="https://latex.codecogs.com/png.latex?%5Csin(%5Ctheta)%20%5Capprox%20u_x,%5Cqquad%20%5Ccos(%5Ctheta)%20%5Capprox%201."></p>
 <p>So, under the small-slope approximation, the horizontal force balance becomes:</p>
-<p><img src="https://latex.codecogs.com/png.latex?T(x_1)%20-T(x_0)=%5Capprox%200."></p>
+<p><img src="https://latex.codecogs.com/png.latex?T(x_1)%20-T(x_0)%5Capprox%200."></p>
 <p>Therefore, to leading order, we treat the tension magnitude as constant along the string and denote it by <img src="https://latex.codecogs.com/png.latex?T">. This is handy, because we can now substitute this into our vertical force balance equation:</p>
 <p><img src="https://latex.codecogs.com/png.latex?T(u_x(x_1,t)%20-%20u_x(x_0,t))%20=%20%5Crho%5Cint_%7Bx_0%7D%5E%7Bx_1%7D%20u_%7Btt%7D(x,t)dx."></p>
 <p>By the Fundamental Theorem of Calculus, we know that:</p>
