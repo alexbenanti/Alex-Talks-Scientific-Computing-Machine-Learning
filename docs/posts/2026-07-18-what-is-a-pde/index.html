@@ -6,9 +6,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Theory, Applications, and Random Rants on SciML">
+<meta name="author" content="Alex Benanti">
+<meta name="dcterms.date" content="2026-07-18">
+<meta name="description" content="What makes an equation a partial differential equation, what counts as a solution, and how can PDEs model physics?">
 
-<title>Scientific Machine Learning, Computational Science, and Miscellaneous Topics – Alex Talks Scentific Computing and Machine Learning</title>
+<title>What Is a PDE? – Alex Talks Scentific Computing and Machine Learning</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -24,33 +26,50 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<link href="./assets/favicon.svg" rel="icon" type="image/svg+xml">
-<script src="site_libs/quarto-listing/list.min.js"></script>
-<script src="site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-0a6b7249c26820e032cb0bd839ff02b1.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-4d3f3448f837ff03356db176d8adb603.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-43f970c3d1ad79044b916b8b30316a23.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-4d3f3448f837ff03356db176d8adb603.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0a6b7249c26820e032cb0bd839ff02b1.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-4d3f3448f837ff03356db176d8adb603.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-43f970c3d1ad79044b916b8b30316a23.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-4d3f3448f837ff03356db176d8adb603.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -78,35 +97,6 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
-
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-title','listing-author','listing-date','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: ["listing-title","listing-author","listing-date","listing-image","listing-description","listing-categories"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
 <style>html{ scroll-behavior: smooth; }</style>
 
   <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
@@ -153,13 +143,19 @@ window.Quarto = {
 };
 </script>
 
-<link rel="stylesheet" href="styles.css">
-<link rel="alternate" type="application/rss+xml" title="Alex Talks Scentific Computing and Machine Learning" href="index.xml" data-external="1"><meta property="og:title" content="Scientific Machine Learning, Computational Science, and Miscellaneous Topics – Alex Talks Scentific Computing and Machine Learning">
-<meta property="og:description" content="Theory, Applications, and Random Rants on SciML">
+<link rel="stylesheet" href="../../styles.css">
+<meta property="og:title" content="What Is a PDE? – Alex Talks Scentific Computing and Machine Learning">
+<meta property="og:description" content="What makes an equation a partial differential equation, what counts as a solution, and how can PDEs model physics?">
+<meta property="og:image" content="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/images/wave_example.png">
 <meta property="og:site_name" content="Alex Talks Scentific Computing and Machine Learning">
-<meta name="twitter:title" content="Scientific Machine Learning, Computational Science, and Miscellaneous Topics – Alex Talks Scentific Computing and Machine Learning">
-<meta name="twitter:description" content="Theory, Applications, and Random Rants on SciML">
-<meta name="twitter:card" content="summary">
+<meta property="og:image:height" content="412">
+<meta property="og:image:width" content="1878">
+<meta name="twitter:title" content="What Is a PDE? – Alex Talks Scentific Computing and Machine Learning">
+<meta name="twitter:description" content="What makes an equation a partial differential equation, what counts as a solution, and how can PDEs model physics?">
+<meta name="twitter:image" content="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/images/wave_example.png">
+<meta name="twitter:image-height" content="412">
+<meta name="twitter:image-width" content="1878">
+<meta name="twitter:card" content="summary_large_image">
 </head>
 
 <body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
@@ -331,7 +327,7 @@ window.Quarto = {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../../index.html">
     <span class="navbar-title">Alex Talks Scentific Computing and Machine Learning</span>
     </a>
   </div>
@@ -342,11 +338,11 @@ window.Quarto = {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Posts</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./about.html"> 
+    <a class="nav-link" href="../../about.html"> 
 <span class="menu-text">About</span></a>
   </li>  
 </ul>
@@ -357,7 +353,7 @@ window.Quarto = {
 <span class="menu-text"></span></a>
   </li>  
   <li class="nav-item compact">
-    <a class="nav-link" href="./index.xml"> <i class="bi bi-rss" role="img" aria-label="RSS feed">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img" aria-label="RSS feed">
 </i> 
 <span class="menu-text"></span></a>
   </li>  
@@ -370,7 +366,7 @@ window.Quarto = {
     </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
@@ -378,29 +374,58 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#latest-notes" id="toc-latest-notes" class="nav-link active" data-scroll-target="#latest-notes">Latest notes</a></li>
+  <li><a href="#partial-derivatives" id="toc-partial-derivatives" class="nav-link active" data-scroll-target="#partial-derivatives">Partial Derivatives</a>
+  <ul class="collapse">
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
+  </ul></li>
+  <li><a href="#definition-of-a-pde" id="toc-definition-of-a-pde" class="nav-link" data-scroll-target="#definition-of-a-pde">Definition of a PDE</a>
+  <ul class="collapse">
+  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
+  </ul></li>
+  <li><a href="#what-does-it-mean-to-solve-a-pde" id="toc-what-does-it-mean-to-solve-a-pde" class="nav-link" data-scroll-target="#what-does-it-mean-to-solve-a-pde">What Does it Mean to Solve a PDE?</a>
+  <ul class="collapse">
+  <li><a href="#example-1" id="toc-example-1" class="nav-link" data-scroll-target="#example-1">Example</a></li>
+  </ul></li>
+  <li><a href="#optional-deep-dive-derivation-of-a-1d-wave-equation" id="toc-optional-deep-dive-derivation-of-a-1d-wave-equation" class="nav-link" data-scroll-target="#optional-deep-dive-derivation-of-a-1d-wave-equation">Optional Deep Dive: Derivation of a 1D Wave Equation</a></li>
+  <li><a href="#takeaway" id="toc-takeaway" class="nav-link" data-scroll-target="#takeaway">Takeaway</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
 </nav>
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UERFcw==">PDEs <span class="quarto-category-count">(1)</span></div></div></div>
+    </div>
 <!-- main -->
-<main class="content column-page-left" id="quarto-document-content">
+<main class="content" id="quarto-document-content">
 
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Scientific Machine Learning, Computational Science, and Miscellaneous Topics</h1>
-</div>
+<h1 class="title">What Is a PDE?</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">PDEs</div>
+  </div>
+  </div>
 
 <div>
   <div class="description">
-    Theory, Applications, and Random Rants on SciML
+    What makes an equation a partial differential equation, what counts as a solution, and how can PDEs model physics?
   </div>
 </div>
 
 
-<div class="quarto-title-meta column-page-left">
+<div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Alex Benanti </p>
+          </div>
+  </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 18, 2026</p>
+    </div>
+  </div>
   
     
   </div>
@@ -410,62 +435,141 @@ window.Quarto = {
 </header>
 
 
-<div class="hero">
-<div class="hero-kicker">
-<p>AN APPLIED MATHEMATICS BLOG</p>
-</div>
-<section id="machine-learning-methods-for-solving-physics-problems" class="level1">
-<h1>Machine Learning Methods for Solving Physics Problems</h1>
-<p>Notes on scientific machine learning, numerical analysis, optimization, and the mathematical structure connecting them.</p>
-<p><a href="#latest-notes" class="btn btn-primary btn-lg">Read the latest notes</a> <a href="./about.html" class="btn btn-outline-secondary btn-lg">About the author</a></p>
+<p>If your physics knowledge comes mostly from brilliant communicators like Neil deGrasse Tyson or Brian Cox, you aren’t alone. However, while pop science is fantastic for sparking curiosity, it rarely gives you the tools to look under the hood yourself. To really understand the universe—and eventually, to teach machine learning models how to simulate it—we have to speak its native language: Partial Differential Equations (PDEs). I know that term can be a massive mental barrier. If you’ve had bad experiences with math in the past, PDEs can sound incredibly intimidating. My goal in this first post is to completely demystify them. If you have a basic grasp of limits and derivatives, you have everything you need to follow along.</p>
+<section id="partial-derivatives" class="level2">
+<h2 class="anchored" data-anchor-id="partial-derivatives">Partial Derivatives</h2>
+<p>Let <span class="math inline">f(x,y)</span> be a function of two variables. We can take a derivative with respect to one variable, while the other is held constant. These are the <em>partial derivatives</em>, or <em>partials</em>, of <span class="math inline">f</span>.</p>
+<p><span class="math display">
+\frac{\partial f}{\partial x} = \lim_{h\rightarrow 0}\frac{f(x+h,y) - f(x,y)}{h},
+</span> <span class="math display">
+\frac{\partial f}{\partial y} = \lim_{k\rightarrow 0}\frac{f(x,y+k)-f(x,y)}{k}.
+</span></p>
+<p>In practical terms, if <span class="math inline">f(x,y)</span> describes a surface, then <span class="math inline">f_x</span> measures how the surface changes as we move in the <span class="math inline">x</span>-direction while keeping <span class="math inline">y</span> fixed. Similarly, <span class="math inline">f_y</span> measures the change in the <span class="math inline">y</span>-direction while <span class="math inline">x</span> is fixed.</p>
+<section id="example" class="level3">
+<h3 class="anchored" data-anchor-id="example">Example</h3>
+<p>Suppose we have the function:</p>
+<p><span class="math display">f(x,y) = x^2 + 3xy.</span></p>
+<p>Differentiating with respect to <span class="math inline">x</span> and holding <span class="math inline">y</span> constant gives us:</p>
+<p><span class="math display">f_x(x,y) = 2x+3y,</span></p>
+<p>while differentiating with respect to <span class="math inline">y</span> and holding <span class="math inline">x</span> constant gives us:</p>
+<p><span class="math display">f_y(x,y) = 3x.</span></p>
 </section>
+</section>
+<section id="definition-of-a-pde" class="level2">
+<h2 class="anchored" data-anchor-id="definition-of-a-pde">Definition of a PDE</h2>
+<p>A <strong>PDE</strong> is a relationship between an unknown function <span class="math inline">u(x,y,\cdots)</span> of at least two variables, its partials, and functions of the independent variables. The <strong>order</strong> of a PDE is the highest derivative appearing.</p>
+<p>More formally, a PDE is an equation of the form:</p>
+<p><span class="math display">F(x_1,x_2,\cdots, x_n, u, u_{x_1}, u_{x_2},\cdots, u_{x_1 x_2},\cdots) = 0,</span></p>
+<p>where <span class="math inline">x_1,\cdots x_n</span> are the <em>independent variables</em>, <span class="math inline">u</span> is the unknown function (also called the <em>dependent variable</em>) that depends on these variables, and <span class="math inline">u_{x_i}, u_{x_{i} x_{j}}</span> represent the <em>partial derivatives</em> of <span class="math inline">u</span> with respect to the independent variables. Note that we do not stop at order two in the general case. Higher-order PDEs occur as well, although first- and second-order equations are the most common examples in an introductory course.</p>
+<section id="examples" class="level3">
+<h3 class="anchored" data-anchor-id="examples">Examples</h3>
+<ol type="1">
+<li><strong>Transport Equation</strong></li>
+</ol>
+<p><span class="math display">\frac{\partial u}{\partial t} + c\frac{\partial u}{\partial x} = 0,\qquad \text{Order = 1}</span></p>
+<ol start="2" type="1">
+<li><strong>Laplace’s Equation</strong></li>
+</ol>
+<p><span class="math display">\frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} = 0,\qquad \text{Order = 2}</span></p>
+<ol start="3" type="1">
+<li><strong>Heat Equation</strong></li>
+</ol>
+<p><span class="math display">\frac{\partial u}{\partial t} = \kappa\frac{\partial^2 u}{\partial x^2},\qquad \text{Order = 2}</span></p>
+<p>Note that for the heat equation, although it contains only a first derivative with respect to time, it is second order because <span class="math inline">u_{xx}</span> is a second derivative.</p>
+</section>
+</section>
+<section id="what-does-it-mean-to-solve-a-pde" class="level2">
+<h2 class="anchored" data-anchor-id="what-does-it-mean-to-solve-a-pde">What Does it Mean to Solve a PDE?</h2>
+<p>For now, we will use the “classical” notion of a solution. A sufficiently differentiable function <span class="math inline">u</span> solves a PDE on a domain <span class="math inline">D</span> if substituting <span class="math inline">u</span> and its partial derivatives into the equation makes the equation true at every point in <span class="math inline">D</span>. If the problem also includes initial or boundary conditions, then <span class="math inline">u</span> must satisfy those conditions as well.</p>
+<section id="example-1" class="level3">
+<h3 class="anchored" data-anchor-id="example-1">Example</h3>
+<p><span class="math display">u(x,t) = e^{-t}\sin(2x)</span></p>
+<p>Does <span class="math inline">u</span> solve <span class="math inline">4u_t = u_{xx}</span>? Let’s find out!</p>
+<p><span class="math display">u_t = -e^{-t}\sin(2x)\quad\Rightarrow\quad 4u_t = -4e^{-t}\sin(2x),</span></p>
+<p><span class="math display">u_x = 2e^{-t}\cos(2x)\quad\Rightarrow\quad u_{xx} = -4e^{-t}\sin(2x).</span></p>
+<p>So, we can verify that this particular <span class="math inline">u</span> solves the given PDE! (If you look closely, you can verify that this is a variation of the heat equation with diffusivity <span class="math inline">\kappa = \frac{1}{4}</span>). Well, that wasn’t so bad… is this really all physicists do? Well, as it turns out, <em>checking</em> if a given function is a solution to a PDE is much more straightforward than actually <em>finding</em> solutions. And “the solution” is perhaps an improper phrase to use. A PDE by itself often has an infinite number of solutions. Initial and boundary conditions help determine which solution describes the particular situation we care about. Even after initial and boundary conditions are supplied, many PDE problems do not have a useful closed-form solution. In those cases, numerical methods allow us to approximate the solution on a computer.</p>
+<p>Everything I just said will make more sense in future blog posts, but it should be well-established that the process of finding solutions to PDEs is not as straightforward as finding solutions to algebraic equations you may have dealt with in the past. This is not to say it is more difficult, but it certainly requires a different approach.</p>
+<p>Some unanswered questions go deeper than finding a convenient closed-form formula. In certain cases, fundamental questions about the existence and regularity of solutions remain unresolved. A famous example is the three-dimensional incompressible Navier–Stokes system. The associated Millennium Prize Problem asks, roughly speaking, whether smooth solutions arising from suitable smooth initial data always remain smooth for all time, or whether they can develop singularities <span class="citation" data-cites="fefferman2006navierstokes">(<a href="#ref-fefferman2006navierstokes" role="doc-biblioref">Fefferman 2006</a>)</span>. As of July 2026, the Clay Mathematics Institute still lists the problem as unsolved, with 1 million US dollars allocated to its solution <span class="citation" data-cites="claymillennium">(<a href="#ref-claymillennium" role="doc-biblioref">Clay Mathematics Institute, n.d.</a>)</span>.</p>
+</section>
+</section>
+<section id="optional-deep-dive-derivation-of-a-1d-wave-equation" class="level2">
+<h2 class="anchored" data-anchor-id="optional-deep-dive-derivation-of-a-1d-wave-equation">Optional Deep Dive: Derivation of a 1D Wave Equation</h2>
+<p>To cap off this first post, I would like to do a derivation relating to physics so that you can see how valuable PDEs are for modelling the world around us. To fully follow along with this derivation, I recommend the reader also have some knowledge of antiderivatives and integration as well as Newton’s second law.</p>
+<p>Suppose an elastic string of length <span class="math inline">\ell</span> has both ends tied down and is subject to transverse waves. Let <span class="math inline">u(x,t)</span> denote the vertical displacement of the string at horizontal position <span class="math inline">x</span> and time <span class="math inline">t</span>. Assume that the string has uniform linear mass density <span class="math inline">\rho</span>, measured in kg/m, and that its motion is purely transverse. Because the endpoints are fixed, we have:</p>
+<p><span class="math display">u(0,t) = u(\ell, t) = 0.</span></p>
+<p>Further, we assume that its slope is small in magnitude (<span class="math inline">|u_x|\ll 1</span>), and damping and external forces are neglected.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/wave_example.png" class="img-fluid figure-img"></p>
+<figcaption>Illustration of a string tied down at two ends <span class="math inline">x=0</span> and <span class="math inline">x = \ell</span></figcaption>
+</figure>
 </div>
-<section id="latest-notes" class="level2">
-<h2 class="anchored" data-anchor-id="latest-notes">Latest notes</h2>
-<p>Each post aims to cover a specific topic in math, machine learning, computational science, or all of the above!</p>
-
+<p>Now, we can zoom in and pick two distinct points on the string <span class="math inline">x_0</span> and <span class="math inline">x_1</span>. At the endpoints of this segment, the tangent to the string makes angles <span class="math inline">\theta_0</span> and <span class="math inline">\theta_1</span> with the horizontal. The corresponding tension magnitudes are <span class="math inline">T(x_0)</span> and <span class="math inline">T(x_1)</span> respectively:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/wave_tension.png" class="img-fluid figure-img" style="width:50.0%"></p>
+<figcaption>Zoomed in perspective of the string analyzed between two distinct points <span class="math inline">x_0</span> and <span class="math inline">x_1</span>.</figcaption>
+</figure>
+</div>
+<p>Now, we have to balance the forces. Since there is no horizontal acceleration (the string only vibrates) the forces will add up to zero.</p>
+<p><span class="math display">T(x_1)\cos(\theta_1) - T(x_0)\cos(\theta_0) = 0.</span></p>
+<p>However, there <em>is</em> a vertical acceleration. So, we can obtain the total vertical force using Newton’s second law <span class="math inline">F = ma</span>, where the vertical acceleration of the string is <span class="math inline">u_{tt}</span>. Between points <span class="math inline">x_0</span> and <span class="math inline">x_1</span>, we can take the integral of mass density times acceleration to give us the net vertical force:</p>
+<p><span class="math display">T(x_1)\sin(\theta_1) - T(x_0)\sin(\theta_0) = \int_{x_0}^{x_1}\rho u_{tt}dx.</span></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/wave_triangle.png" class="img-fluid figure-img" style="width:50.0%"></p>
+<figcaption>Right triangle relating the slope of the string to its tangent angle.</figcaption>
+</figure>
+</div>
+<p>Now, using the right triangle that is formed by the angle and vertical change (demonstrated above) we can observe that:</p>
+<p><span class="math display">\sin(\theta) = \frac{u_x}{\sqrt{1+u_x^2}},\qquad \cos(\theta) = \frac{1}{\sqrt{1+u_x^2}}.</span></p>
+<p>Under the small-slope assumption, <span class="math inline">|u_x| \ll 1</span>, so we approximate the <span class="math inline">\sin</span> and <span class="math inline">\cos</span> values as:</p>
+<p><span class="math display">\sin(\theta) \approx u_x,\qquad \cos(\theta) \approx 1.</span></p>
+<p>So, under the small-slope approximation, the horizontal force balance becomes:</p>
+<p><span class="math display">T(x_1) -T(x_0)=\approx 0.</span></p>
+<p>Therefore, to leading order, we treat the tension magnitude as constant along the string and denote it by <span class="math inline">T</span>. This is handy, because we can now substitute this into our vertical force balance equation:</p>
+<p><span class="math display">T(u_x(x_1,t) - u_x(x_0,t)) = \rho\int_{x_0}^{x_1} u_{tt}(x,t)dx.</span></p>
+<p>By the Fundamental Theorem of Calculus, we know that:</p>
+<p><span class="math display">u_x(x_1,t) - u_x(x_0,t) = \int_{x_0}^{x_1}u_{xx}(x,t)dx.</span></p>
+<p>Thus, we obtain:</p>
+<p><span class="math display">T\int_{x_0}^{x_1}u_{xx}(x,t)dx = \rho\int_{x_0}^{x_1}u_{tt}(x,t)dx.</span></p>
+<p>Because this equality holds for every interval <span class="math inline">[x_0,x_1]</span>, and because the integrands are continuous, the integrands must be equal:</p>
+<p><span class="math display">Tu_{xx} = \rho u_{tt}.</span></p>
+<p>And, if we define <span class="math inline">c:= \sqrt{\frac{T}{\rho}}</span> (where <span class="math inline">c</span> denotes the speed at which waves propagate along the string), we obtain the one-dimensional wave equation in its familiar form:</p>
+<p><span class="math display">u_{tt} = c^2u_{xx}.</span></p>
+<p>Voilà! Of course, this is just a 1D string and physics can get quite a bit more complicated than this, but the premise of modelling physical phenomena with the help of PDEs is a consistent theme throughout many areas of physics.</p>
+<p><em>Note</em>: This is just a reminder that we did not <em>solve</em> the 1D wave equation, we simply derived the PDE that defines the dynamics. As it turns out, solving this PDE analytically requires a bit more mathematics, which will potentially be discussed in future blog posts.</p>
+</section>
+<section id="takeaway" class="level2">
+<h2 class="anchored" data-anchor-id="takeaway">Takeaway</h2>
+<p>A PDE is not merely an equation containing unusual derivative symbols. It is a local rule describing how a quantity changes with respect to multiple independent variables—often space and time. Together with appropriate initial and/or boundary conditions, that rule can become a mathematical model of a physical system.</p>
+<p>We have not yet solved the wave equation—or any other PDE in a systematic way. That is where the next parts of this series will lead: first toward analytical methods, then numerical approximation, and eventually toward the ways scientific machine learning can learn from or work alongside these equations.</p>
+<p><em>All figures are my own.</em></p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-claymillennium" class="csl-entry" role="listitem">
+Clay Mathematics Institute. n.d. <em>The Millennium Prize Problems</em>. Accessed July 19, 2026. <a href="https://www.claymath.org/millennium-problems/">https://www.claymath.org/millennium-problems/</a>.
+</div>
+<div id="ref-fefferman2006navierstokes" class="csl-entry" role="listitem">
+Fefferman, Charles L. 2006. <span>“Existence and Smoothness of the <span>Navier–Stokes</span> Equation.”</span> In <em>The Millennium Prize Problems</em>, edited by James Carlson, Arthur Jaffe, and Andrew Wiles. Clay Mathematics Institute; American Mathematical Society. <a href="https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf">https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf</a>.
+</div>
+</div>
 
 
 </section>
 
-<div class="quarto-listing quarto-listing-container-grid" id="listing-listing">
-<div class="listing-actions-group">
-    <div class="input-group input-group-sm quarto-listing-filter">
-      <span class="input-group-text"><i class="bi bi-search"></i></span>
-      <input type="text" class="search form-control" placeholder="Filter">
-    </div>
-</div>
-<div class="list grid quarto-listing-cols-3">
-<div class="g-col-1" data-index="0" data-categories="UERFcw==" data-listing-date-sort="1784347200000" data-listing-file-modified-sort="1784434106146" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1430">
-<a href="./posts/2026-07-18-what-is-a-pde/index.html" class="quarto-grid-link">
-<div class="quarto-grid-item card h-100 card-left">
-<p class="card-img-top"><img loading='lazy' src="posts/2026-07-18-what-is-a-pde/images/wave_example.png" style="height: 150px;"  class="thumbnail-image card-img"/></p>
-<div class="card-body post-contents">
-<h5 class="no-anchor card-title listing-title">
-What Is a PDE?
-</h5>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('UERFcw=='); return false;">PDEs</div>
-
-</div>
-<div class="card-text listing-description delink">
-<p>What makes an equation a partial differential equation, what counts as a solution, and how can PDEs model physics?</p>
-</div>
-<div class="card-attribution card-text-small justify">
-<div class="listing-author">
-Alex Benanti
-</div>
-<div class="listing-date">
-Jul 18, 2026
-</div>
-</div>
-</div>
-</div></a>
-</div>
-</div>
-<div class="listing-no-matching d-none">No matching items</div>
-</div><a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{benanti2026,
+  author = {Benanti, Alex},
+  title = {What {Is} a {PDE?}},
+  date = {2026-07-18},
+  url = {https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/},
+  langid = {en}
+}
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-benanti2026" class="csl-entry quarto-appendix-citeas" role="listitem">
+Benanti, Alex. 2026. <span>“What Is a PDE?”</span> July 18. <a href="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/">https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/</a>.
+</div></div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     // Ensure there is a toggle, if there isn't float one in the top right
@@ -908,5 +1012,5 @@ Jul 18, 2026
 
 
 
-<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
 </body></html>

@@ -10,6 +10,151 @@
 <atom:link href="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/index.xml" rel="self" type="application/rss+xml"/>
 <description>Theory, Applications, and Random Rants on SciML</description>
 <generator>quarto-1.9.38</generator>
-<lastBuildDate>Fri, 17 Jul 2026 22:10:15 GMT</lastBuildDate>
+<lastBuildDate>Sat, 18 Jul 2026 04:00:00 GMT</lastBuildDate>
+<item>
+  <title>What Is a PDE?</title>
+  <dc:creator>Alex Benanti</dc:creator>
+  <link>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p>If your physics knowledge comes mostly from brilliant communicators like Neil deGrasse Tyson or Brian Cox, you aren’t alone. However, while pop science is fantastic for sparking curiosity, it rarely gives you the tools to look under the hood yourself. To really understand the universe—and eventually, to teach machine learning models how to simulate it—we have to speak its native language: Partial Differential Equations (PDEs). I know that term can be a massive mental barrier. If you’ve had bad experiences with math in the past, PDEs can sound incredibly intimidating. My goal in this first post is to completely demystify them. If you have a basic grasp of limits and derivatives, you have everything you need to follow along.</p>
+<section id="partial-derivatives" class="level2">
+<h2 class="anchored" data-anchor-id="partial-derivatives">Partial Derivatives</h2>
+<p>Let <img src="https://latex.codecogs.com/png.latex?f(x,y)"> be a function of two variables. We can take a derivative with respect to one variable, while the other is held constant. These are the <em>partial derivatives</em>, or <em>partials</em>, of <img src="https://latex.codecogs.com/png.latex?f">.</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cfrac%7B%5Cpartial%20f%7D%7B%5Cpartial%20x%7D%20=%20%5Clim_%7Bh%5Crightarrow%200%7D%5Cfrac%7Bf(x+h,y)%20-%20f(x,y)%7D%7Bh%7D,%0A"> <img src="https://latex.codecogs.com/png.latex?%0A%5Cfrac%7B%5Cpartial%20f%7D%7B%5Cpartial%20y%7D%20=%20%5Clim_%7Bk%5Crightarrow%200%7D%5Cfrac%7Bf(x,y+k)-f(x,y)%7D%7Bk%7D.%0A"></p>
+<p>In practical terms, if <img src="https://latex.codecogs.com/png.latex?f(x,y)"> describes a surface, then <img src="https://latex.codecogs.com/png.latex?f_x"> measures how the surface changes as we move in the <img src="https://latex.codecogs.com/png.latex?x">-direction while keeping <img src="https://latex.codecogs.com/png.latex?y"> fixed. Similarly, <img src="https://latex.codecogs.com/png.latex?f_y"> measures the change in the <img src="https://latex.codecogs.com/png.latex?y">-direction while <img src="https://latex.codecogs.com/png.latex?x"> is fixed.</p>
+<section id="example" class="level3">
+<h3 class="anchored" data-anchor-id="example">Example</h3>
+<p>Suppose we have the function:</p>
+<p><img src="https://latex.codecogs.com/png.latex?f(x,y)%20=%20x%5E2%20+%203xy."></p>
+<p>Differentiating with respect to <img src="https://latex.codecogs.com/png.latex?x"> and holding <img src="https://latex.codecogs.com/png.latex?y"> constant gives us:</p>
+<p><img src="https://latex.codecogs.com/png.latex?f_x(x,y)%20=%202x+3y,"></p>
+<p>while differentiating with respect to <img src="https://latex.codecogs.com/png.latex?y"> and holding <img src="https://latex.codecogs.com/png.latex?x"> constant gives us:</p>
+<p><img src="https://latex.codecogs.com/png.latex?f_y(x,y)%20=%203x."></p>
+</section>
+</section>
+<section id="definition-of-a-pde" class="level2">
+<h2 class="anchored" data-anchor-id="definition-of-a-pde">Definition of a PDE</h2>
+<p>A <strong>PDE</strong> is a relationship between an unknown function <img src="https://latex.codecogs.com/png.latex?u(x,y,%5Ccdots)"> of at least two variables, its partials, and functions of the independent variables. The <strong>order</strong> of a PDE is the highest derivative appearing.</p>
+<p>More formally, a PDE is an equation of the form:</p>
+<p><img src="https://latex.codecogs.com/png.latex?F(x_1,x_2,%5Ccdots,%20x_n,%20u,%20u_%7Bx_1%7D,%20u_%7Bx_2%7D,%5Ccdots,%20u_%7Bx_1%20x_2%7D,%5Ccdots)%20=%200,"></p>
+<p>where <img src="https://latex.codecogs.com/png.latex?x_1,%5Ccdots%20x_n"> are the <em>independent variables</em>, <img src="https://latex.codecogs.com/png.latex?u"> is the unknown function (also called the <em>dependent variable</em>) that depends on these variables, and <img src="https://latex.codecogs.com/png.latex?u_%7Bx_i%7D,%20u_%7Bx_%7Bi%7D%20x_%7Bj%7D%7D"> represent the <em>partial derivatives</em> of <img src="https://latex.codecogs.com/png.latex?u"> with respect to the independent variables. Note that we do not stop at order two in the general case. Higher-order PDEs occur as well, although first- and second-order equations are the most common examples in an introductory course.</p>
+<section id="examples" class="level3">
+<h3 class="anchored" data-anchor-id="examples">Examples</h3>
+<ol type="1">
+<li><strong>Transport Equation</strong></li>
+</ol>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cfrac%7B%5Cpartial%20u%7D%7B%5Cpartial%20t%7D%20+%20c%5Cfrac%7B%5Cpartial%20u%7D%7B%5Cpartial%20x%7D%20=%200,%5Cqquad%20%5Ctext%7BOrder%20=%201%7D"></p>
+<ol start="2" type="1">
+<li><strong>Laplace’s Equation</strong></li>
+</ol>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cfrac%7B%5Cpartial%5E2%20u%7D%7B%5Cpartial%20x%5E2%7D%20+%20%5Cfrac%7B%5Cpartial%5E2%20u%7D%7B%5Cpartial%20y%5E2%7D%20=%200,%5Cqquad%20%5Ctext%7BOrder%20=%202%7D"></p>
+<ol start="3" type="1">
+<li><strong>Heat Equation</strong></li>
+</ol>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cfrac%7B%5Cpartial%20u%7D%7B%5Cpartial%20t%7D%20=%20%5Ckappa%5Cfrac%7B%5Cpartial%5E2%20u%7D%7B%5Cpartial%20x%5E2%7D,%5Cqquad%20%5Ctext%7BOrder%20=%202%7D"></p>
+<p>Note that for the heat equation, although it contains only a first derivative with respect to time, it is second order because <img src="https://latex.codecogs.com/png.latex?u_%7Bxx%7D"> is a second derivative.</p>
+</section>
+</section>
+<section id="what-does-it-mean-to-solve-a-pde" class="level2">
+<h2 class="anchored" data-anchor-id="what-does-it-mean-to-solve-a-pde">What Does it Mean to Solve a PDE?</h2>
+<p>For now, we will use the “classical” notion of a solution. A sufficiently differentiable function <img src="https://latex.codecogs.com/png.latex?u"> solves a PDE on a domain <img src="https://latex.codecogs.com/png.latex?D"> if substituting <img src="https://latex.codecogs.com/png.latex?u"> and its partial derivatives into the equation makes the equation true at every point in <img src="https://latex.codecogs.com/png.latex?D">. If the problem also includes initial or boundary conditions, then <img src="https://latex.codecogs.com/png.latex?u"> must satisfy those conditions as well.</p>
+<section id="example-1" class="level3">
+<h3 class="anchored" data-anchor-id="example-1">Example</h3>
+<p><img src="https://latex.codecogs.com/png.latex?u(x,t)%20=%20e%5E%7B-t%7D%5Csin(2x)"></p>
+<p>Does <img src="https://latex.codecogs.com/png.latex?u"> solve <img src="https://latex.codecogs.com/png.latex?4u_t%20=%20u_%7Bxx%7D">? Let’s find out!</p>
+<p><img src="https://latex.codecogs.com/png.latex?u_t%20=%20-e%5E%7B-t%7D%5Csin(2x)%5Cquad%5CRightarrow%5Cquad%204u_t%20=%20-4e%5E%7B-t%7D%5Csin(2x),"></p>
+<p><img src="https://latex.codecogs.com/png.latex?u_x%20=%202e%5E%7B-t%7D%5Ccos(2x)%5Cquad%5CRightarrow%5Cquad%20u_%7Bxx%7D%20=%20-4e%5E%7B-t%7D%5Csin(2x)."></p>
+<p>So, we can verify that this particular <img src="https://latex.codecogs.com/png.latex?u"> solves the given PDE! (If you look closely, you can verify that this is a variation of the heat equation with diffusivity <img src="https://latex.codecogs.com/png.latex?%5Ckappa%20=%20%5Cfrac%7B1%7D%7B4%7D">). Well, that wasn’t so bad… is this really all physicists do? Well, as it turns out, <em>checking</em> if a given function is a solution to a PDE is much more straightforward than actually <em>finding</em> solutions. And “the solution” is perhaps an improper phrase to use. A PDE by itself often has an infinite number of solutions. Initial and boundary conditions help determine which solution describes the particular situation we care about. Even after initial and boundary conditions are supplied, many PDE problems do not have a useful closed-form solution. In those cases, numerical methods allow us to approximate the solution on a computer.</p>
+<p>Everything I just said will make more sense in future blog posts, but it should be well-established that the process of finding solutions to PDEs is not as straightforward as finding solutions to algebraic equations you may have dealt with in the past. This is not to say it is more difficult, but it certainly requires a different approach.</p>
+<p>Some unanswered questions go deeper than finding a convenient closed-form formula. In certain cases, fundamental questions about the existence and regularity of solutions remain unresolved. A famous example is the three-dimensional incompressible Navier–Stokes system. The associated Millennium Prize Problem asks, roughly speaking, whether smooth solutions arising from suitable smooth initial data always remain smooth for all time, or whether they can develop singularities <span class="citation" data-cites="fefferman2006navierstokes">(Fefferman 2006)</span>. As of July 2026, the Clay Mathematics Institute still lists the problem as unsolved, with 1 million US dollars allocated to its solution <span class="citation" data-cites="claymillennium">(Clay Mathematics Institute, n.d.)</span>.</p>
+</section>
+</section>
+<section id="optional-deep-dive-derivation-of-a-1d-wave-equation" class="level2">
+<h2 class="anchored" data-anchor-id="optional-deep-dive-derivation-of-a-1d-wave-equation">Optional Deep Dive: Derivation of a 1D Wave Equation</h2>
+<p>To cap off this first post, I would like to do a derivation relating to physics so that you can see how valuable PDEs are for modelling the world around us. To fully follow along with this derivation, I recommend the reader also have some knowledge of antiderivatives and integration as well as Newton’s second law.</p>
+<p>Suppose an elastic string of length <img src="https://latex.codecogs.com/png.latex?%5Cell"> has both ends tied down and is subject to transverse waves. Let <img src="https://latex.codecogs.com/png.latex?u(x,t)"> denote the vertical displacement of the string at horizontal position <img src="https://latex.codecogs.com/png.latex?x"> and time <img src="https://latex.codecogs.com/png.latex?t">. Assume that the string has uniform linear mass density <img src="https://latex.codecogs.com/png.latex?%5Crho">, measured in kg/m, and that its motion is purely transverse. Because the endpoints are fixed, we have:</p>
+<p><img src="https://latex.codecogs.com/png.latex?u(0,t)%20=%20u(%5Cell,%20t)%20=%200."></p>
+<p>Further, we assume that its slope is small in magnitude (<img src="https://latex.codecogs.com/png.latex?%7Cu_x%7C%5Cll%201">), and damping and external forces are neglected.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/images/wave_example.png" class="img-fluid figure-img"></p>
+<figcaption>Illustration of a string tied down at two ends <img src="https://latex.codecogs.com/png.latex?x=0"> and <img src="https://latex.codecogs.com/png.latex?x%20=%20%5Cell"></figcaption>
+</figure>
+</div>
+<p>Now, we can zoom in and pick two distinct points on the string <img src="https://latex.codecogs.com/png.latex?x_0"> and <img src="https://latex.codecogs.com/png.latex?x_1">. At the endpoints of this segment, the tangent to the string makes angles <img src="https://latex.codecogs.com/png.latex?%5Ctheta_0"> and <img src="https://latex.codecogs.com/png.latex?%5Ctheta_1"> with the horizontal. The corresponding tension magnitudes are <img src="https://latex.codecogs.com/png.latex?T(x_0)"> and <img src="https://latex.codecogs.com/png.latex?T(x_1)"> respectively:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/images/wave_tension.png" class="img-fluid figure-img" style="width:50.0%"></p>
+<figcaption>Zoomed in perspective of the string analyzed between two distinct points <img src="https://latex.codecogs.com/png.latex?x_0"> and <img src="https://latex.codecogs.com/png.latex?x_1">.</figcaption>
+</figure>
+</div>
+<p>Now, we have to balance the forces. Since there is no horizontal acceleration (the string only vibrates) the forces will add up to zero.</p>
+<p><img src="https://latex.codecogs.com/png.latex?T(x_1)%5Ccos(%5Ctheta_1)%20-%20T(x_0)%5Ccos(%5Ctheta_0)%20=%200."></p>
+<p>However, there <em>is</em> a vertical acceleration. So, we can obtain the total vertical force using Newton’s second law <img src="https://latex.codecogs.com/png.latex?F%20=%20ma">, where the vertical acceleration of the string is <img src="https://latex.codecogs.com/png.latex?u_%7Btt%7D">. Between points <img src="https://latex.codecogs.com/png.latex?x_0"> and <img src="https://latex.codecogs.com/png.latex?x_1">, we can take the integral of mass density times acceleration to give us the net vertical force:</p>
+<p><img src="https://latex.codecogs.com/png.latex?T(x_1)%5Csin(%5Ctheta_1)%20-%20T(x_0)%5Csin(%5Ctheta_0)%20=%20%5Cint_%7Bx_0%7D%5E%7Bx_1%7D%5Crho%20u_%7Btt%7Ddx."></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/images/wave_triangle.png" class="img-fluid figure-img" style="width:50.0%"></p>
+<figcaption>Right triangle relating the slope of the string to its tangent angle.</figcaption>
+</figure>
+</div>
+<p>Now, using the right triangle that is formed by the angle and vertical change (demonstrated above) we can observe that:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Csin(%5Ctheta)%20=%20%5Cfrac%7Bu_x%7D%7B%5Csqrt%7B1+u_x%5E2%7D%7D,%5Cqquad%20%5Ccos(%5Ctheta)%20=%20%5Cfrac%7B1%7D%7B%5Csqrt%7B1+u_x%5E2%7D%7D."></p>
+<p>Under the small-slope assumption, <img src="https://latex.codecogs.com/png.latex?%7Cu_x%7C%20%5Cll%201">, so we approximate the <img src="https://latex.codecogs.com/png.latex?%5Csin"> and <img src="https://latex.codecogs.com/png.latex?%5Ccos"> values as:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Csin(%5Ctheta)%20%5Capprox%20u_x,%5Cqquad%20%5Ccos(%5Ctheta)%20%5Capprox%201."></p>
+<p>So, under the small-slope approximation, the horizontal force balance becomes:</p>
+<p><img src="https://latex.codecogs.com/png.latex?T(x_1)%20-T(x_0)=%5Capprox%200."></p>
+<p>Therefore, to leading order, we treat the tension magnitude as constant along the string and denote it by <img src="https://latex.codecogs.com/png.latex?T">. This is handy, because we can now substitute this into our vertical force balance equation:</p>
+<p><img src="https://latex.codecogs.com/png.latex?T(u_x(x_1,t)%20-%20u_x(x_0,t))%20=%20%5Crho%5Cint_%7Bx_0%7D%5E%7Bx_1%7D%20u_%7Btt%7D(x,t)dx."></p>
+<p>By the Fundamental Theorem of Calculus, we know that:</p>
+<p><img src="https://latex.codecogs.com/png.latex?u_x(x_1,t)%20-%20u_x(x_0,t)%20=%20%5Cint_%7Bx_0%7D%5E%7Bx_1%7Du_%7Bxx%7D(x,t)dx."></p>
+<p>Thus, we obtain:</p>
+<p><img src="https://latex.codecogs.com/png.latex?T%5Cint_%7Bx_0%7D%5E%7Bx_1%7Du_%7Bxx%7D(x,t)dx%20=%20%5Crho%5Cint_%7Bx_0%7D%5E%7Bx_1%7Du_%7Btt%7D(x,t)dx."></p>
+<p>Because this equality holds for every interval <img src="https://latex.codecogs.com/png.latex?%5Bx_0,x_1%5D">, and because the integrands are continuous, the integrands must be equal:</p>
+<p><img src="https://latex.codecogs.com/png.latex?Tu_%7Bxx%7D%20=%20%5Crho%20u_%7Btt%7D."></p>
+<p>And, if we define <img src="https://latex.codecogs.com/png.latex?c:=%20%5Csqrt%7B%5Cfrac%7BT%7D%7B%5Crho%7D%7D"> (where <img src="https://latex.codecogs.com/png.latex?c"> denotes the speed at which waves propagate along the string), we obtain the one-dimensional wave equation in its familiar form:</p>
+<p><img src="https://latex.codecogs.com/png.latex?u_%7Btt%7D%20=%20c%5E2u_%7Bxx%7D."></p>
+<p>Voilà! Of course, this is just a 1D string and physics can get quite a bit more complicated than this, but the premise of modelling physical phenomena with the help of PDEs is a consistent theme throughout many areas of physics.</p>
+<p><em>Note</em>: This is just a reminder that we did not <em>solve</em> the 1D wave equation, we simply derived the PDE that defines the dynamics. As it turns out, solving this PDE analytically requires a bit more mathematics, which will potentially be discussed in future blog posts.</p>
+</section>
+<section id="takeaway" class="level2">
+<h2 class="anchored" data-anchor-id="takeaway">Takeaway</h2>
+<p>A PDE is not merely an equation containing unusual derivative symbols. It is a local rule describing how a quantity changes with respect to multiple independent variables—often space and time. Together with appropriate initial and/or boundary conditions, that rule can become a mathematical model of a physical system.</p>
+<p>We have not yet solved the wave equation—or any other PDE in a systematic way. That is where the next parts of this series will lead: first toward analytical methods, then numerical approximation, and eventually toward the ways scientific machine learning can learn from or work alongside these equations.</p>
+<p><em>All figures are my own.</em></p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-claymillennium" class="csl-entry">
+Clay Mathematics Institute. n.d. <em>The Millennium Prize Problems</em>. Accessed July 19, 2026. <a href="https://www.claymath.org/millennium-problems/">https://www.claymath.org/millennium-problems/</a>.
+</div>
+<div id="ref-fefferman2006navierstokes" class="csl-entry">
+Fefferman, Charles L. 2006. <span>“Existence and Smoothness of the <span>Navier–Stokes</span> Equation.”</span> In <em>The Millennium Prize Problems</em>, edited by James Carlson, Arthur Jaffe, and Andrew Wiles. Clay Mathematics Institute; American Mathematical Society. <a href="https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf">https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf</a>.
+</div>
+</div>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{benanti2026,
+  author = {Benanti, Alex},
+  title = {What {Is} a {PDE?}},
+  date = {2026-07-18},
+  url = {https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/},
+  langid = {en}
+}
+</code></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-benanti2026" class="csl-entry quarto-appendix-citeas">
+Benanti, Alex. 2026. <span>“What Is a PDE?”</span> July 18. <a href="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/">https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/</a>.
+</div></div></section></div> ]]></description>
+  <category>PDEs</category>
+  <guid>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/</guid>
+  <pubDate>Sat, 18 Jul 2026 04:00:00 GMT</pubDate>
+</item>
 </channel>
 </rss>
