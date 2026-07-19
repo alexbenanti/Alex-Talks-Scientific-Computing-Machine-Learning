@@ -155,14 +155,14 @@ can observe that:
 
 $$\sin(\theta) = \frac{u_x}{\sqrt{1+u_x^2}},\qquad \cos(\theta) = \frac{1}{\sqrt{1+u_x^2}}.$$
 
-Under the small-slope assumption, $|u_x| \ll 1$, so we approximate the $\sin$ and $\cos$
+Under the small-slope assumption, $|u_x| \ll 1$, we approximate the $\sin$ and $\cos$
 values as:
 
 $$\sin(\theta) \approx u_x,\qquad \cos(\theta) \approx 1.$$
 
 So, under the small-slope approximation, the horizontal force balance becomes:
 
-$$T(x_1) -T(x_0)=\approx 0.$$
+$$T(x_1) -T(x_0)\approx 0.$$
 
 Therefore, to leading order, we treat the tension magnitude 
 as constant along the string and denote it by $T$. This is handy, because we can now substitute this into our vertical force balance equation:
