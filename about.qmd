@@ -13,7 +13,7 @@ about:
       href: "mailto:alexander.benanti@stonybrook.edu"
 ---
 
-## About me
+## About Me 
 
 I am **Alex Benanti**, an Applied Mathematics PhD researcher at Stony Brook University interested in scientific machine learning, numerical analysis, and computation for partial differential equations.
 
@@ -21,9 +21,10 @@ This blog is intended to be a collection of explanations of traditional methods 
 
 ## What you will find here
 
-- derivations connecting modern learning methods to classical applied mathematics;
-- fun experiments with numerical linear algebra and PDEs;
-- careful readings and replications of scientific machine-learning papers.
+- Explanations of topics in applied mathematics from beginner to advanced;
+- Derivations connecting modern learning methods to classical applied mathematics;
+- Fun experiments with numerical linear algebra and PDEs;
+- Careful readings and replications of scientific machine-learning papers.
 
 ## A note on corrections
 
