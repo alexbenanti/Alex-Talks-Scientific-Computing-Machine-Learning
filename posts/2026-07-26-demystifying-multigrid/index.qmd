@@ -40,6 +40,9 @@ too important, but it is noteworthy that this is an *elliptic PDE*.
 ::: {#def-elliptic}
 
 ## Elliptic PDE
+Suppose we have the following linear second-order PDE for an unknown function of two variables $u(x,y)$:
+
+$$Au_{xx} + 2Bu_{xy} + Cu_{yy} + Du_{x} + Eu_y + Fu + G = 0$$
 
 where the coefficients $A,B,\ldots,G$ may be constants or functions of
 $x$ and $y$. This PDE is called **elliptic at a point** $(x,y)$ if
