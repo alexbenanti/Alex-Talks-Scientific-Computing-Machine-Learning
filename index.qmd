@@ -1,31 +1,29 @@
 ---
-title: "Scientific Machine Learning, Computational Science, and Miscellaneous Topics"
-description: "Theory, Applications, and Random Rants on SciML"
+pagetitle: "Scientific Computing, Explained — Alex Benanti"
+description-meta: "Accessible notes on partial differential equations, numerical methods, optimization, and scientific machine learning."
+toc: false
 listing:
+  id: posts-listing
   contents: posts
   sort: "date desc"
   type: grid
-  categories: true
+  grid-columns: 2
   sort-ui: false
-  filter-ui: true
+  filter-ui: false
   page-size: 9
-  feed: true
+  feed:
+    title: "Scientific Computing, Explained"
+    description: "Notes on PDEs, numerical methods, optimization, and scientific machine learning."
 page-layout: full
-title-block-banner: false
 ---
 
 ::: {.hero}
-::: {.hero-kicker}
-AN APPLIED MATHEMATICS BLOG
+# Scientific Computing, Explained
+
+Accessible notes on partial differential equations, numerical methods, optimization, and scientific machine learning—from the equations to the algorithms.
 :::
 
-# Machine Learning Methods for Solving Physics Problems
+## Latest Posts
 
-Notes on scientific machine learning, numerical analysis, optimization, and the mathematical structure connecting them.
-
-[Read the latest notes](#latest-notes){.btn .btn-primary .btn-lg} [About the author](about.qmd){.btn .btn-outline-secondary .btn-lg}
+::: {#posts-listing}
 :::
-
-## Latest notes {#latest-notes}
-
-Each post aims to cover a specific topic in math, machine learning, computational science, or all of the above!

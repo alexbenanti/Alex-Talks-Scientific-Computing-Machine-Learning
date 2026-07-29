@@ -6,9 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Theory, Applications, and Random Rants on SciML">
+<meta name="description" content="Accessible notes on partial differential equations, numerical methods, optimization, and scientific machine learning.">
 
-<title>Scientific Machine Learning, Computational Science, and Miscellaneous Topics – Alex Talks Scentific Computing and Machine Learning</title>
+<title>Scientific Computing, Explained — Alex Benanti – Alex Benanti</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -81,20 +81,20 @@ ul.task-list li input[type="checkbox"] {
 <script>
 
   window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
+    const listingTargetEl = window.document.querySelector('#listing-posts-listing .list');
     if (!listingTargetEl) {
       // No listing discovered, do not attach.
       return; 
     }
 
     const options = {
-      valueNames: ['listing-title','listing-author','listing-date','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      valueNames: ['listing-title','listing-author','listing-date','listing-image','listing-description',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
       
-      searchColumns: ["listing-title","listing-author","listing-date","listing-image","listing-description","listing-categories"],
+      searchColumns: ["listing-title","listing-author","listing-date","listing-image","listing-description"],
     };
 
     window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
+    window['quarto-listings']['listing-posts-listing'] = new List('listing-posts-listing', options);
 
     if (window['quarto-listing-loaded']) {
       window['quarto-listing-loaded']();
@@ -154,12 +154,14 @@ window.Quarto = {
 </script>
 
 <link rel="stylesheet" href="styles.css">
-<link rel="alternate" type="application/rss+xml" title="Alex Talks Scentific Computing and Machine Learning" href="index.xml" data-external="1"><meta property="og:title" content="Scientific Machine Learning, Computational Science, and Miscellaneous Topics – Alex Talks Scentific Computing and Machine Learning">
-<meta property="og:description" content="Theory, Applications, and Random Rants on SciML">
-<meta property="og:site_name" content="Alex Talks Scentific Computing and Machine Learning">
-<meta name="twitter:title" content="Scientific Machine Learning, Computational Science, and Miscellaneous Topics – Alex Talks Scentific Computing and Machine Learning">
-<meta name="twitter:description" content="Theory, Applications, and Random Rants on SciML">
-<meta name="twitter:card" content="summary">
+<link rel="alternate" type="application/rss+xml" title="Scientific Computing, Explained" href="index.xml" data-external="1"><meta property="og:title" content="Scientific Computing, Explained — Alex Benanti">
+<meta property="og:description" content="Accessible notes on partial differential equations, numerical methods, and scientific machine learning.">
+<meta property="og:image" content="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/residual-error/thumbnail.svg">
+<meta property="og:site_name" content="Alex Benanti">
+<meta name="twitter:title" content="Scientific Computing, Explained — Alex Benanti">
+<meta name="twitter:description" content="Accessible notes on partial differential equations, numerical methods, and scientific machine learning.">
+<meta name="twitter:image" content="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/residual-error/thumbnail.svg">
+<meta name="twitter:card" content="summary_large_image">
 </head>
 
 <body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
@@ -332,7 +334,7 @@ window.Quarto = {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">Alex Talks Scentific Computing and Machine Learning</span>
+    <span class="navbar-title">Alex Benanti</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -373,70 +375,45 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#latest-notes" id="toc-latest-notes" class="nav-link active" data-scroll-target="#latest-notes">Latest notes</a></li>
-  </ul>
-</nav>
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(1)</span></div><div class="category" data-category="UERFcw==">PDEs <span class="quarto-category-count">(1)</span></div></div></div>
+    
 <!-- main -->
-<main class="content column-page-left" id="quarto-document-content">
+<main class="content column-page" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
 
 
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<h1 class="title">Scientific Machine Learning, Computational Science, and Miscellaneous Topics</h1>
-</div>
-
-<div>
-  <div class="description">
-    Theory, Applications, and Random Rants on SciML
-  </div>
-</div>
 
 
-<div class="quarto-title-meta column-page-left">
 
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
-<div class="hero">
-<div class="hero-kicker">
-<p>AN APPLIED MATHEMATICS BLOG</p>
-</div>
-<section id="machine-learning-methods-for-solving-physics-problems" class="level1">
-<h1>Machine Learning Methods for Solving Physics Problems</h1>
-<p>Notes on scientific machine learning, numerical analysis, optimization, and the mathematical structure connecting them.</p>
-<p><a href="#latest-notes" class="btn btn-primary btn-lg">Read the latest notes</a> <a href="./about.html" class="btn btn-outline-secondary btn-lg">About the author</a></p>
+<section id="scientific-computing-explained" class="level1 hero">
+<h1>Scientific Computing, Explained</h1>
+<p>Accessible notes on partial differential equations, numerical methods, optimization, and scientific machine learning—from the equations to the algorithms.</p>
 </section>
+<section id="latest-posts" class="level2">
+<h2 class="anchored" data-anchor-id="latest-posts">Latest Posts</h2>
+<div id="listing-posts-listing" class="quarto-listing quarto-listing-container-grid">
+<div class="list grid quarto-listing-cols-2">
+<div class="g-col-1" data-index="0" data-categories="TnVtZXJpY2FsJTIwTGluZWFyJTIwQWxnZWJyYSUyQ051bWVyaWNhbCUyMFBERXMlMkNNdWx0aWdyaWQlMjBNZXRob2RzJTJDTnVtZXJpY2FsJTIwTWV0aG9kcw==" data-listing-date-sort="1785211200000" data-listing-file-modified-sort="1785351235267" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1990">
+<a href="./posts/2026-07-26-demystifying-multigrid/index.html" class="quarto-grid-link">
+<div class="quarto-grid-item card h-100 card-left">
+<p class="card-img-top"><img loading='lazy' src="posts/2026-07-26-demystifying-multigrid/index_files/figure-html/fig-eigenmodes-output-1.png" style="height: 150px;"  class="thumbnail-image card-img"/></p>
+<div class="card-body post-contents">
+<h5 class="no-anchor card-title listing-title">
+Demystifying Multigrid (Part 1)
+</h5>
+<div class="card-text listing-description delink">
+<p>Multigrid methods can be some of the more confusing numerical linear algebra techniques. In Part 1, we develop the key intuition: relaxation quickly removes oscillatory…</p>
 </div>
-<section id="latest-notes" class="level2">
-<h2 class="anchored" data-anchor-id="latest-notes">Latest notes</h2>
-<p>Each post aims to cover a specific topic in math, machine learning, computational science, or all of the above!</p>
-
-
-
-</section>
-
-<div class="quarto-listing quarto-listing-container-grid" id="listing-listing">
-<div class="listing-actions-group">
-    <div class="input-group input-group-sm quarto-listing-filter">
-      <span class="input-group-text"><i class="bi bi-search"></i></span>
-      <input type="text" class="search form-control" placeholder="Filter">
-    </div>
+<div class="card-attribution card-text-small justify">
+<div class="listing-author">
+Alex Benanti
 </div>
-<div class="list grid quarto-listing-cols-3">
-<div class="g-col-1" data-index="0" data-categories="UERFcw==" data-listing-date-sort="1784347200000" data-listing-file-modified-sort="1784435755283" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1429">
+<div class="listing-date">
+Jul 28, 2026
+</div>
+</div>
+</div>
+</div></a>
+</div>
+<div class="g-col-1" data-index="1" data-categories="UERFcw==" data-listing-date-sort="1784347200000" data-listing-file-modified-sort="1784435755283" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1429">
 <a href="./posts/2026-07-18-what-is-a-pde/index.html" class="quarto-grid-link">
 <div class="quarto-grid-item card h-100 card-left">
 <p class="card-img-top"><img loading='lazy' src="posts/2026-07-18-what-is-a-pde/images/wave_example.png" style="height: 150px;"  class="thumbnail-image card-img"/></p>
@@ -444,11 +421,6 @@ window.Quarto = {
 <h5 class="no-anchor card-title listing-title">
 What Is a PDE?
 </h5>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('UERFcw=='); return false;">PDEs</div>
-
-</div>
 <div class="card-text listing-description delink">
 <p>What makes an equation a partial differential equation, what counts as a solution, and how can PDEs model physics?</p>
 </div>
@@ -463,9 +435,39 @@ Jul 18, 2026
 </div>
 </div></a>
 </div>
+<div class="g-col-1" data-index="2" data-categories="c2NpZW50aWZpYyUyMG1hY2hpbmUlMjBsZWFybmluZyUyQ251bWVyaWNhbCUyMGFuYWx5c2lzJTJDUERFcw==" data-listing-date-sort="1784088000000" data-listing-file-modified-sort="1784323093526" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="2" data-listing-word-count-sort="340">
+<a href="./posts/residual-error/index.html" class="quarto-grid-link">
+<div class="quarto-grid-item card h-100 card-left">
+<p class="card-img-top">
+<img loading="lazy" src="./posts/residual-error/thumbnail.svg" class="thumbnail-image card-img" style="height: 150px;">
+</p>
+<div class="card-body post-contents">
+<h5 class="no-anchor card-title listing-title">
+Why a small residual need not mean a small error
+</h5>
+<div class="card-text listing-description delink">
+<p>A two-dimensional example exposes the stability assumption hidden inside residual minimization.</p>
+</div>
+<div class="card-attribution card-text-small justify">
+<div class="listing-author">
+Alex Benanti
+</div>
+<div class="listing-date">
+Jul 15, 2026
+</div>
+</div>
+</div>
+</div></a>
+</div>
 </div>
 <div class="listing-no-matching d-none">No matching items</div>
-</div><a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+</div>
+
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     // Ensure there is a toggle, if there isn't float one in the top right
