@@ -7,11 +7,11 @@
     "text": "Accessible notes on partial differential equations, numerical methods, optimization, and scientific machine learning—from the equations to the algorithms."
   },
   {
-    "objectID": "index.html#latest-notes",
-    "href": "index.html#latest-notes",
-    "title": "Scientific Machine Learning, Computational Science, and Miscellaneous Topics",
-    "section": "Latest notes",
-    "text": "Latest notes\nEach post aims to cover a specific topic in math, machine learning, computational science, or all of the above!"
+    "objectID": "index.html#latest-posts",
+    "href": "index.html#latest-posts",
+    "title": "Scientific Computing, Explained",
+    "section": "Latest Posts",
+    "text": "Latest Posts\n\n\n\n\n\n\n\n\nDemystifying Multigrid (Part 1)\n\n\nMultigrid methods can be some of the more confusing numerical linear algebra techniques. In Part 1, we develop the key intuition: relaxation quickly removes oscillatory…\n\n\n\nAlex Benanti\n\n\nJul 28, 2026\n\n\n\n\n\n\n\n\n\n\n\nWhat Is a PDE?\n\n\nWhat makes an equation a partial differential equation, what counts as a solution, and how can PDEs model physics?\n\n\n\nAlex Benanti\n\n\nJul 18, 2026\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "posts/2026-07-18-what-is-a-pde/index.html",
@@ -124,12 +124,5 @@
     "title": "About",
     "section": "A note on corrections",
     "text": "A note on corrections\nTechnical writing improves through scrutiny. Please open an issue in the site repository when you find an error or an unclear argument."
-  },
-  {
-    "objectID": "index.html#latest-posts",
-    "href": "index.html#latest-posts",
-    "title": "Scientific Computing, Explained",
-    "section": "Latest Posts",
-    "text": "Latest Posts\n\n\n\n\n\n\n\n\nDemystifying Multigrid (Part 1)\n\n\nMultigrid methods can be some of the more confusing numerical linear algebra techniques. In Part 1, we develop the key intuition: relaxation quickly removes oscillatory…\n\n\n\nAlex Benanti\n\n\nJul 28, 2026\n\n\n\n\n\n\n\n\n\n\n\nWhat Is a PDE?\n\n\nWhat makes an equation a partial differential equation, what counts as a solution, and how can PDEs model physics?\n\n\n\nAlex Benanti\n\n\nJul 18, 2026\n\n\n\n\n\n\n\n\n\n\n\n\n\nWhy a small residual need not mean a small error\n\n\nA two-dimensional example exposes the stability assumption hidden inside residual minimization.\n\n\n\nAlex Benanti\n\n\nJul 15, 2026\n\n\n\n\n\n\nNo matching items"
   }
 ]
