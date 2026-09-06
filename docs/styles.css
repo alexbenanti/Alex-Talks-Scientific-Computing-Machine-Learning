@@ -16,6 +16,17 @@ body.quarto-dark {
   --sciml-rule: #394453;
 }
 
+/* Keep the transparent eigenmode figure's labels readable in dark mode. */
+body.quarto-dark #fig-eigenmodes-n8 img,
+body.quarto-dark #fig-eigenmodes-n4 img,
+body.quarto-dark #fig-grid-hierarchy img,
+body.quarto-dark #fig-prolongation img,
+body.quarto-dark #fig-restriction img,
+body.quarto-dark #fig-v-cycle img,
+body.quarto-dark #fig-v-cycle-solution img {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 body {
   background: var(--sciml-paper);
   color: var(--sciml-ink);
@@ -128,6 +139,9 @@ blockquote {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  #fig-v-cycle img {
+    content: url("posts/2026-09-06-demystifying-multigrid-part-2/v-cycle-still.png");
+  }
   .quarto-grid-item {
     transition: none;
   }

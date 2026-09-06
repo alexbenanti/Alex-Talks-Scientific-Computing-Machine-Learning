@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Alex Benanti">
+<meta name="dcterms.date" content="2026-09-06">
+<meta name="description" content="How coarse-grid correction handles smooth error, and how the pieces come together in a multigrid cycle.">
+
+<title>Demystifying Multigrid (Part 2) – Alex Benanti</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../assets/favicon.svg" rel="icon" type="image/svg+xml">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-2f5524832805d734b96ee676820b2dda.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-87d2f67b67766bee9572f2204e8fa37e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-2f5524832805d734b96ee676820b2dda.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<meta property="og:title" content="Demystifying Multigrid (Part 2) – Alex Benanti">
+<meta property="og:description" content="How coarse-grid correction handles smooth error, and how the pieces come together in a multigrid cycle.">
+<meta property="og:image" content="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/eigenmodes-n8.png">
+<meta property="og:site_name" content="Alex Benanti">
+<meta property="og:image:alt" content="Seven panels of sine curves sampled on a grid with spacing one eighth. Modes one through seven oscillate increasingly rapidly.">
+<meta property="og:image:height" content="1782">
+<meta property="og:image:width" content="1773">
+<meta name="twitter:title" content="Demystifying Multigrid (Part 2) – Alex Benanti">
+<meta name="twitter:description" content="How coarse-grid correction handles smooth error, and how the pieces come together in a multigrid cycle.">
+<meta name="twitter:image" content="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/eigenmodes-n8.png">
+<meta name="twitter:image:alt" content="Seven panels of sine curves sampled on a grid with spacing one eighth. Modes one through seven oscillate increasingly rapidly.">
+<meta name="twitter:image-height" content="1782">
+<meta name="twitter:image-width" content="1773">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Alex Benanti</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Posts</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/alexbenanti/Alex-Talks-Scientific-Computing-Machine-Learning"> <i class="bi bi-github" role="img" aria-label="GitHub repository">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img" aria-label="RSS feed">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#recap-and-motivation" id="toc-recap-and-motivation" class="nav-link active" data-scroll-target="#recap-and-motivation">Recap and Motivation</a></li>
+  <li><a href="#using-smoothing-effects" id="toc-using-smoothing-effects" class="nav-link" data-scroll-target="#using-smoothing-effects">Using Smoothing Effects</a></li>
+  <li><a href="#why-a-coarser-grid-helps" id="toc-why-a-coarser-grid-helps" class="nav-link" data-scroll-target="#why-a-coarser-grid-helps">Why a Coarser Grid Helps</a></li>
+  <li><a href="#what-happens-to-fine-high-frequencies" id="toc-what-happens-to-fine-high-frequencies" class="nav-link" data-scroll-target="#what-happens-to-fine-high-frequencies">What Happens to Fine High Frequencies?</a></li>
+  <li><a href="#the-four-corners-of-multigrid" id="toc-the-four-corners-of-multigrid" class="nav-link" data-scroll-target="#the-four-corners-of-multigrid">The Four Corners of Multigrid</a>
+  <ul class="collapse">
+  <li><a href="#hierarchy-of-grids" id="toc-hierarchy-of-grids" class="nav-link" data-scroll-target="#hierarchy-of-grids">Hierarchy of Grids</a></li>
+  <li><a href="#interpolationprolongation" id="toc-interpolationprolongation" class="nav-link" data-scroll-target="#interpolationprolongation">Interpolation/Prolongation</a></li>
+  <li><a href="#restriction" id="toc-restriction" class="nav-link" data-scroll-target="#restriction">Restriction</a></li>
+  <li><a href="#iterative-methods-and-the-two-grid-scheme" id="toc-iterative-methods-and-the-two-grid-scheme" class="nav-link" data-scroll-target="#iterative-methods-and-the-two-grid-scheme">Iterative Methods and the Two-Grid Scheme</a></li>
+  </ul></li>
+  <li><a href="#multigrid-scheme" id="toc-multigrid-scheme" class="nav-link" data-scroll-target="#multigrid-scheme">Multigrid Scheme</a></li>
+  <li><a href="#watching-a-v-cycle" id="toc-watching-a-v-cycle" class="nav-link" data-scroll-target="#watching-a-v-cycle">Watching a V-Cycle</a></li>
+  <li><a href="#computational-experiment" id="toc-computational-experiment" class="nav-link" data-scroll-target="#computational-experiment">Computational Experiment</a></li>
+  <li><a href="#closing-thoughts" id="toc-closing-thoughts" class="nav-link" data-scroll-target="#closing-thoughts">Closing Thoughts</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Demystifying Multigrid (Part 2)</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Numerical Linear Algebra</div>
+    <div class="quarto-category">Numerical PDEs</div>
+    <div class="quarto-category">Multigrid Methods</div>
+    <div class="quarto-category">Numerical Methods</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    How coarse-grid correction handles smooth error, and how the pieces come together in a multigrid cycle.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Alex Benanti </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 6, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- Draft outline: replace these notes with your own prose as you build the post. -->
+<p>In <a href="../../posts/2026-07-26-demystifying-multigrid/index.html">Part 1</a>, we saw that weighted Jacobi quickly damps oscillatory error but reduces smooth error very slowly. In this post, we will explore how coarse grids help address the error that relaxation leaves behind.</p>
+<section id="recap-and-motivation" class="level2">
+<h2 class="anchored" data-anchor-id="recap-and-motivation">Recap and Motivation</h2>
+<!-- Briefly recall the 1D Poisson problem, the grid notation, and the smoothing result from Part 1. -->
+<p>Let us recall the 1D Poisson problem we saw in Part 1:</p>
+<p><span class="math display">\begin{split}
+-u''(x)  &amp;= f(x),\quad 0&lt;x&lt;1\\
+u(0) &amp;= u(1) = 0
+\end{split}</span></p>
+<p>Take <span class="math inline">n</span> equal intervals, with <span class="math inline">h=1/n</span> and interior nodes <span class="math inline">x_\ell=\ell h</span> for <span class="math inline">\ell=1,\ldots,n-1</span>. The central difference method gives the discrete system: <span class="math display">
+\frac{1}{h^2}\begin{bmatrix}
+2 &amp; -1 &amp; &amp; &amp; &amp; \\
+-1 &amp; 2 &amp; -1&amp; &amp; &amp; \\
+&amp; -1 &amp; 2 &amp; -1 &amp; &amp; \\
+  &amp;  &amp; \ddots &amp; \ddots &amp; \ddots &amp; \\
+  &amp;  &amp; &amp; \ddots &amp; \ddots &amp;  -1\\
+&amp;  &amp; &amp;  &amp; -1 &amp;  2\\
+\end{bmatrix}\mathbf{v} = \mathbf{f},
+</span></p>
+<p>with:</p>
+<p><span class="math display">\mathbf{T} = \begin{bmatrix}
+2 &amp; -1 &amp; &amp; &amp; &amp; \\
+-1 &amp; 2 &amp; -1&amp; &amp; &amp; \\
+&amp; -1 &amp; 2 &amp; -1 &amp; &amp; \\
+  &amp;  &amp; \ddots &amp; \ddots &amp; \ddots &amp; \\
+  &amp;  &amp; &amp; \ddots &amp; \ddots &amp;  -1\\
+&amp;  &amp; &amp;  &amp; -1 &amp;  2\\
+\end{bmatrix},\qquad \mathbf{A}_h = \frac{1}{h^2}\mathbf{T}.</span></p>
+<p>Let <span class="math inline">\mathbf{u}_h^*</span> be the exact solution of this discrete system and <span class="math inline">\mathbf{v}_h^k</span> its current iterative approximation. Define the algebraic error by <span class="math inline">\mathbf{e}^k=\mathbf{u}_h^*-\mathbf{v}_h^k</span>; this is distinct from the error caused by discretizing the PDE.</p>
+<p>Also recall that, for a consistent linear stationary iterative method, we can represent the error after <span class="math inline">k</span> iterations as: <span class="math display">
+\mathbf{e}^k = \mathbf{G}^k\mathbf{e}^0
+</span></p>
+<p>where <span class="math inline">\mathbf{G}\in\mathbb{R}^{m\times m}</span> is the error-propagation matrix and <span class="math inline">m=n-1</span>. <strong>If <span class="math inline">\mathbf{G}</span> is diagonalizable</strong>, we can expand <span class="math inline">\mathbf{e}^0=\sum_{j=1}^m\alpha_j\boldsymbol{\varphi}_j</span> in its eigenvector basis and write:</p>
+<p><span class="math display">
+\mathbf{e}^k = \sum_{j=1}^m \alpha_j (\lambda_j)^k \mathbf{\varphi}_j.
+</span></p>
+<p>This assumption holds for weighted Jacobi on our 1-D Poisson problem: its error-propagation matrix is symmetric. It does not hold for every stationary iteration.</p>
+<p>The question that remains open from last time is: how do we remove the components of the error associated with eigenvalues for which <span class="math inline">|\lambda_j|\approx 1</span>—that is, the parts of the error that decay slowly?</p>
+</section>
+<section id="using-smoothing-effects" class="level2">
+<h2 class="anchored" data-anchor-id="using-smoothing-effects">Using Smoothing Effects</h2>
+<p>To address the low-frequency components of the error, we can use a “coarser” grid. A wave that is smooth relative to the fine-grid spacing varies more rapidly relative to the coarse-grid spacing. No new frequency information is created: we sample the same wave at fewer points. Here, coarsening means increasing the mesh spacing and reducing the number of interior unknowns.</p>
+<p>But this sounds counterintuitive at first. Intuitively, you might assume that a coarser grid provides less usable detail—like watching a movie on a 1970s box TV instead of a modern IMAX screen. However, consider a broad, gentle slope spanning thousands of fine-grid pixels. To a local smoother inspecting adjacent pixels on the IMAX screen, that slope looks nearly flat, so the smoother barely adjusts it.</p>
+<p>When we represent that same smooth error on a coarse grid, the spatial distance between grid points increases. Its physical shape does not change, but its variation from one grid point to the next becomes more pronounced. Some modes that relaxation handles poorly on the fine grid can therefore be reduced more effectively on a coarser grid. The smoothest modes may still need further coarsening. This is how I got myself to understand this nuanced idea, but an actual example may make it clearer.</p>
+<p>Let us again consider the matrix <span class="math inline">\mathbf{T}</span>. First, we will take <span class="math inline">n = 8</span>, giving us the following frequencies/modes:</p>
+<p>With the convention from Part 1, <span class="math inline">n=8</span> means eight grid intervals and seven interior unknowns. The eigenmodes are <span class="math inline">v_\ell^{(j)}=\sin(\pi j\ell/8)</span> for <span class="math inline">j=1,\ldots,7</span>.</p>
+<div id="fig-eigenmodes-n8" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Seven panels of sine curves sampled on a grid with spacing one eighth. Modes one through seven oscillate increasingly rapidly.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eigenmodes-n8-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="eigenmodes-n8.png" class="img-fluid figure-img" alt="Seven panels of sine curves sampled on a grid with spacing one eighth. Modes one through seven oscillate increasingly rapidly.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eigenmodes-n8-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Eigenmodes for <span class="math inline">j=1,\ldots,7</span> with <span class="math inline">n=8</span>. The dots show the grid values; the smooth sine curves are visual guides.
+</figcaption>
+</figure>
+</div>
+<p>Now consider <span class="math inline">n=4</span>: the grid spacing is <span class="math inline">h=1/4</span>, and there are three interior unknowns. The corresponding eigenmodes are <span class="math inline">v_\ell^{(j)}=\sin(\pi j\ell/4)</span> for <span class="math inline">j=1,2,3</span>.</p>
+<div id="fig-eigenmodes-n4" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Three panels of sine curves sampled on a grid with spacing one quarter. Modes one through three oscillate increasingly rapidly.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eigenmodes-n4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="eigenmodes-n4.png" class="img-fluid figure-img" alt="Three panels of sine curves sampled on a grid with spacing one quarter. Modes one through three oscillate increasingly rapidly.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eigenmodes-n4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Eigenmodes for <span class="math inline">j=1,2,3</span> with <span class="math inline">n=4</span>. The dots show the grid values; the smooth sine curves are visual guides.
+</figcaption>
+</figure>
+</div>
+<p>Of course, the plots look the same, but our evaluation points become fewer and farther apart. With this new discretization, <span class="math inline">j=1</span> remains a smooth mode, while modes <span class="math inline">j=2</span> and <span class="math inline">j=3</span> now become higher-frequency modes. But… why?</p>
+</section>
+<section id="why-a-coarser-grid-helps" class="level2">
+<h2 class="anchored" data-anchor-id="why-a-coarser-grid-helps">Why a Coarser Grid Helps</h2>
+<p>Let us consider the <span class="math inline">j=2</span> case from the previous example. The fine grid has spacing <span class="math inline">h=1/8</span> and <span class="math inline">n=8</span> intervals; the coarse grid has spacing <span class="math inline">H=2h=1/4</span> and <span class="math inline">N=n/2=4</span> intervals. On the fine grid, this mode has components</p>
+<p><span class="math display">
+v_{h,\ell}^{(2)}=\sin\left(\frac{2\pi\ell}{8}\right).
+</span></p>
+<p>Its dimensionless angular frequency is <span class="math inline">\theta_h=\pi j/n=\pi/4</span>, so <span class="math inline">j/n=1/4</span> is its frequency relative to the grid’s Nyquist limit <span class="math inline">\theta=\pi</span>. This measures oscillation relative to the mesh spacing, not a fraction of the grid’s eigenmodes.</p>
+<p>To isolate the sampling effect, retain every second fine-grid value (a transfer called <strong>injection</strong>). Coarse index <span class="math inline">\ell</span> corresponds to fine index <span class="math inline">2\ell</span>, giving</p>
+<p><span class="math display">
+v_{H,\ell}^{(2)}=v_{h,2\ell}^{(2)}
+=\sin\left(\frac{2\pi(2\ell)}{8}\right)
+=\sin\left(\frac{2\pi\ell}{4}\right),\qquad \ell=0,\ldots,N.
+</span></p>
+<p>The normalized frequency is now <span class="math inline">j/N=1/2</span>, at the start of the coarse grid’s high-frequency band. The physical wave has not changed; its angular frequency per grid step has doubled.</p>
+<p>For weighted Jacobi with <span class="math inline">\omega=2/3</span>, the amplification factor for mode <span class="math inline">j</span> on a grid with <span class="math inline">n</span> intervals is</p>
+<p><span class="math display">
+\gamma_j^{(n)}=1-\frac{4}{3}\sin^2\left(\frac{\pi j}{2n}\right).
+</span></p>
+<p>Thus <span class="math inline">\gamma_2^{(8)}\approx0.805</span>, whereas <span class="math inline">\gamma_2^{(4)}=1/3</span>. One sweep reduces this mode’s amplitude much more on the coarse grid. More generally, <span class="math inline">|\gamma_j^{(n)}|\leq1/3</span> for <span class="math inline">n/2\leq j\leq n-1</span>. This smoothing statement is specific to the weighted-Jacobi choice above; ordinary Jacobi does not uniformly damp the high-frequency modes.</p>
+<p>In the actual multigrid algorithm, we restrict the <strong>residual</strong> and solve a coarse error equation. Injection here illustrates the frequency change; the weighted restriction introduced below also changes the mode amplitudes.</p>
+</section>
+<section id="what-happens-to-fine-high-frequencies" class="level2">
+<h2 class="anchored" data-anchor-id="what-happens-to-fine-high-frequencies">What Happens to Fine High Frequencies?</h2>
+<p>What if we consider <span class="math inline">j=5</span>? This mode is already high-frequency on the fine grid. Can its coarse samples distinguish it from every lower-frequency mode? (Try to answer this yourself.)</p>
+<p>Answer in 3…2…1…</p>
+<p><em>NO!</em> The coarse grid has only three independent interior modes. The fine-grid <span class="math inline">j=5</span> mode becomes indistinguishable, up to a sign, from the coarse-grid <span class="math inline">j=3</span> mode. For <span class="math inline">N=4</span>, its samples are</p>
+<p><span class="math display">
+v_{h,2\ell}^{(5)}=\sin\left(\frac{5\pi\ell}{N}\right).
+</span></p>
+<p>Using the sine difference identity,</p>
+<p><span class="math display">
+\begin{aligned}
+\sin\left(\frac{(2N-5)\pi\ell}{N}\right)
+&amp;=\sin\left(2\pi\ell-\frac{5\pi\ell}{N}\right)\\
+&amp;=\sin(2\pi\ell)\cos\left(\frac{5\pi\ell}{N}\right)
+-\cos(2\pi\ell)\sin\left(\frac{5\pi\ell}{N}\right)\\
+&amp;=-\sin\left(\frac{5\pi\ell}{N}\right).
+\end{aligned}
+</span></p>
+<p>Hence <span class="math inline">v_{h,2\ell}^{(5)}=-v_{H,\ell}^{(3)}</span>. This is <strong>aliasing</strong>: different fine-grid modes give the same coarse samples up to a scalar factor.</p>
+<p>More generally, for <span class="math inline">N&lt;j\leq n-1</span> and <span class="math inline">n=2N</span>,</p>
+<p><span class="math display">
+v_{h,2\ell}^{(j)}=-v_{H,\ell}^{(n-j)}.
+</span></p>
+<p>The boundary case <span class="math inline">j=N=n/2</span> is different: all its coarse samples are <span class="math inline">\sin(\pi\ell)=0</span>. The coarse grid therefore cannot represent every fine-grid error component independently. Notice also that an aliased mode need not be low-frequency on the coarse grid: in our example, <span class="math inline">j=3</span> is its highest mode.</p>
+<p>This motivates the main idea behind multigrid methods:</p>
+<ol type="1">
+<li><p>Use a few weighted-Jacobi sweeps on <span class="math inline">\Omega^h</span> to reduce high-frequency error before transferring information to a coarser grid.</p></li>
+<li><p>Restrict the residual to <span class="math inline">\Omega^{2h}</span> and approximately solve the coarse error equation. Prolongate that correction to reduce error that was smooth on the fine grid.</p></li>
+<li><p>Apply the same idea recursively on <span class="math inline">\Omega^{4h},\Omega^{8h},\ldots</span>, solving directly on the coarsest grid. Return through the levels with corrections and post-smoothing, then repeat cycles until the desired tolerance is reached. A finite number of sweeps does not generally eliminate all error exactly.</p></li>
+</ol>
+</section>
+<section id="the-four-corners-of-multigrid" class="level2">
+<h2 class="anchored" data-anchor-id="the-four-corners-of-multigrid">The Four Corners of Multigrid</h2>
+<div class="callout callout-style-simple callout-note no-icon callout-titled" title="A note on the reference">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A note on the reference
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The framework below draws on <span class="citation" data-cites="olson2015multigrid">Olson (<a href="#ref-olson2015multigrid" role="doc-biblioref">2015</a>)</span>, particularly the discussion of smoothing, grid-transfer operators, and Galerkin coarse-grid correction. The <a href="https://lukeo.cs.illinois.edu/files/2015_Ol_encmg.pdf">author’s manuscript</a> is freely available. I use different notation here: <span class="math inline">n</span> counts grid intervals, and <span class="math inline">h_0</span> denotes the coarsest mesh spacing.</p>
+</div>
+</div>
+<section id="hierarchy-of-grids" class="level3">
+<h3 class="anchored" data-anchor-id="hierarchy-of-grids">Hierarchy of Grids</h3>
+<p>Let us assume that we have a hierarchy of grids. We start from the finest grid with a mesh size of <span class="math inline">h</span>. Then, the grid on the next level will have a mesh size of <span class="math inline">2h</span>, the one after that <span class="math inline">4h</span>, etc. For the coarsest grid, we denote it by <span class="math inline">h_0 = 2^{L-1}h</span> (where <span class="math inline">L</span> is the number of levels we have). The physical grid at the finest level will be denoted as <span class="math inline">\Omega^h</span> and <span class="math inline">\Omega^{h_0}</span> is the grid at the coarsest level.</p>
+<p>We choose nested grids so that each coarse node is a fine node. For the examples here, <span class="math inline">n</span> is a power of two and the coarsest grid has two intervals, leaving one interior unknown.</p>
+<div id="fig-grid-hierarchy" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Four aligned one-dimensional grids labeled Omega h, Omega 2h, Omega 4h, and Omega h-zero equals Omega 8h. From finest to coarsest, they have 16, 8, 4, and 2 equal intervals, with notches at every grid point and labeled spacing brackets.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-grid-hierarchy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="grid-hierarchy.png" class="img-fluid figure-img" alt="Four aligned one-dimensional grids labeled Omega h, Omega 2h, Omega 4h, and Omega h-zero equals Omega 8h. From finest to coarsest, they have 16, 8, 4, and 2 equal intervals, with notches at every grid point and labeled spacing brackets.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-grid-hierarchy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: A four-level hierarchy on <span class="math inline">[0,1]</span> with <span class="math inline">h=1/16</span> and <span class="math inline">h_0=8h=1/2</span>. Each notch marks a grid point. Each coarser grid retains every second point of the preceding grid, doubling the mesh spacing.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="interpolationprolongation" class="level3">
+<h3 class="anchored" data-anchor-id="interpolationprolongation">Interpolation/Prolongation</h3>
+<p>We have spoken much about these different grid discretizations, but we have yet to discuss how we actually TRANSFER between these discretizations. First, we will discuss the operator that brings us from a coarse grid to the finer grid at the next level up. This is called the <strong>interpolation/prolongation operator</strong>. It maps values defined on the coarse grid to values on the fine grid. For <span class="math inline">n=2N</span> intervals and homogeneous Dirichlet boundary values, its action on the interior vectors is:</p>
+<p><span class="math display">\mathbf{P}_{2h}^h: \mathbb{R}^{N-1} \rightarrow \mathbb{R}^{n-1}.</span></p>
+<p>Then, for quantities <span class="math inline">\mathbf{x}_h</span> and <span class="math inline">\mathbf{x}_{2h}</span> defined on grids <span class="math inline">\Omega^h</span> and <span class="math inline">\Omega^{2h}</span> respectively, we can define the explicit prolongation as:</p>
+<p><span class="math display">\mathbf{P}_{2h}^h\mathbf{x}_{2h} = \mathbf{x}_h</span></p>
+<p>Designing prolongation matrices is a major research subfield of multigrid methods (to be discussed in later posts). For now, though, let us consider a simple example: linear interpolation.</p>
+<p>At the even points on the fine grid, we copy the coarse values: <span class="math inline">v_{h,2\ell}=v_{2h,\ell}</span> for <span class="math inline">\ell=0,\ldots,N</span>. At the odd points, we interpolate between adjacent coarse values. These are estimates of the missing values, not a recovery of arbitrary fine-grid data. Linear interpolation gives:</p>
+<p><span class="math display">v_{h,2\ell+1} = \frac{1}{2}(v_{2h,\ell} + v_{2h,\ell+1}),\qquad \ell=0,\ldots,N-1.</span></p>
+<p>With <span class="math inline">v_{2h,0}=v_{2h,N}=0</span>, the matrix acting on the interior values for <span class="math inline">N=4</span> and <span class="math inline">n=8</span> is:</p>
+<p><span class="math display">\mathbf{P}_{2h}^h\mathbf{v}_{2h} = \frac{1}{2}\begin{bmatrix}
+1 &amp; &amp; \\
+2 &amp; &amp; \\
+1 &amp; 1 &amp; \\
+  &amp; 2 &amp; \\
+  &amp; 1 &amp; 1\\
+  &amp; &amp; 2\\
+  &amp; &amp; 1
+\end{bmatrix}\begin{bmatrix}
+\mathbf{v}_{2h,1}\\
+\mathbf{v}_{2h,2}\\
+\mathbf{v}_{2h,3}
+\end{bmatrix} = \begin{bmatrix}
+\mathbf{v}_{h,1}\\
+\mathbf{v}_{h,2}\\
+\vdots\\
+\mathbf{v}_{h,7}
+\end{bmatrix}</span></p>
+<div id="fig-prolongation" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Coarse grid values 0, 1, 0.5, 1.5, 0 are prolonged from four intervals to eight. An arrow labeled P from 2h to h leads to the fine grid, where blue circles retain those values and orange diamonds add midpoint values 0.5, 0.75, 1, and 0.75.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-prolongation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="prolongation.png" class="img-fluid figure-img" alt="Coarse grid values 0, 1, 0.5, 1.5, 0 are prolonged from four intervals to eight. An arrow labeled P from 2h to h leads to the fine grid, where blue circles retain those values and orange diamonds add midpoint values 0.5, 0.75, 1, and 0.75.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-prolongation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Linear prolongation from four to eight intervals, with zero boundary values. New fine-grid values lie on the same piecewise-linear interpolant.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="restriction" class="level3">
+<h3 class="anchored" data-anchor-id="restriction">Restriction</h3>
+<p>The operator that transfers fine-grid values to the coarse grid is called <strong>restriction</strong>. For the same interior vector spaces, it has the mapping:</p>
+<p><span class="math display">\mathbf{R}_h^{2h}: \mathbb{R}^{n-1} \rightarrow \mathbb{R}^{N-1}.</span></p>
+<p>More specifically, we can write the restriction as:</p>
+<p><span class="math display">\mathbf{R}_h^{2h}\mathbf{x}_h =\mathbf{x}_{2h}</span></p>
+<p>As with prolongation, there are many restriction operators. Here we choose <strong>transpose restriction</strong>, <span class="math inline">\mathbf{R}=\mathbf{P}^{\mathsf{T}}</span>, which is commonly paired with the Galerkin coarse operator <span class="math inline">\mathbf{A}_{2h}=\mathbf{P}^{\mathsf{T}}\mathbf{A}_h\mathbf{P}</span>. Restriction alone is not the Galerkin projection. Using our prolongation matrix gives:</p>
+<p><span class="math display">\mathbf{R}_h^{2h}\mathbf{v}_h = \frac{1}{2}\begin{bmatrix}
+1 &amp; 2 &amp; 1 &amp;   &amp;   &amp;  &amp; \\
+  &amp;   &amp; 1 &amp; 2 &amp; 1 &amp;  &amp; \\
+  &amp;   &amp;   &amp;   &amp; 1 &amp; 2 &amp; 1
+\end{bmatrix}\begin{bmatrix}
+\mathbf{v}_{h,1}\\
+\mathbf{v}_{h,2}\\
+\vdots\\
+\mathbf{v}_{h,7}
+\end{bmatrix} = \begin{bmatrix}
+\mathbf{v}_{2h,1}\\
+\mathbf{v}_{2h,2}\\
+\mathbf{v}_{2h,3}
+\end{bmatrix}</span></p>
+<div id="fig-restriction" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Fine-grid values 0, 0.5, 1, 0.75, 0.5, 1, 1.5, 0.75, 0 on the left are mapped by R from h to 2h to coarse-grid values 0, 1.625, 1.375, 2.375, 0 on the right.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-restriction-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="restriction.png" class="img-fluid figure-img" alt="Fine-grid values 0, 0.5, 1, 0.75, 0.5, 1, 1.5, 0.75, 0 on the left are mapped by R from h to 2h to coarse-grid values 0, 1.625, 1.375, 2.375, 0 on the right.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-restriction-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Restriction from eight to four intervals using the matrix <span class="math inline">\mathbf{R}=\mathbf{P}^{\mathsf{T}}</span> above. Each interior coarse value is a weighted sum with weights <span class="math inline">(1/2,1,1/2)</span>; the boundary values remain zero. Both panels use the same vertical scale.
+</figcaption>
+</figure>
+</div>
+<p>The weights here are <span class="math inline">(1/2,1,1/2)</span>, a weighted <strong>sum</strong>. The common 1-D <strong>full-weighting</strong> choice instead uses <span class="math inline">\mathbf{R}_{\mathrm{FW}}=\tfrac12\mathbf{P}^{\mathsf{T}}</span>, with weights <span class="math inline">(1/4,1/2,1/4)</span>. We use transpose restriction throughout this post, including the code. With either convention, form both the coarse matrix <span class="math inline">\mathbf{A}_{2h}=\mathbf{R}\mathbf{A}_h\mathbf{P}</span> and the coarse right-hand side <span class="math inline">\mathbf{r}_{2h}=\mathbf{R}\mathbf{r}_h</span> consistently. Multiplying both by the same nonzero scalar leaves the exact coarse correction unchanged.</p>
+</section>
+<section id="iterative-methods-and-the-two-grid-scheme" class="level3">
+<h3 class="anchored" data-anchor-id="iterative-methods-and-the-two-grid-scheme">Iterative Methods and the Two-Grid Scheme</h3>
+<p>We have already discussed iterative methods a bit, but some additional context is needed to better understand how they fit into the entire “multigrid” story. On the finest grid we solve for the solution; on coarser grids we approximately solve error equations. You may or may not know, from numerical linear algebra, that one way we can find crude approximations to the solutions of linear systems is through iterative methods (as was discussed a bit in Part 1). Let’s say, for example, we had a simple <strong>two-grid</strong> scheme. That is, we have a single fine grid and a single coarse grid. Then, the algorithm would proceed as follows:</p>
+<p>With our error convention, <span class="math inline">\mathbf{e}_h=\mathbf{u}_h^*-\mathbf{v}_h</span> and <span class="math inline">\mathbf{r}_h=\mathbf{f}_h-\mathbf{A}_h\mathbf{v}_h</span> satisfy <span class="math inline">\mathbf{A}_h\mathbf{e}_h=\mathbf{r}_h</span>. This explains why we solve for a coarse error correction and <strong>add</strong> its prolongation to the current approximation.</p>
+<ol type="1">
+<li><p>Iterate on the fine-level problem <span class="math inline">\mathbf{A}_h \mathbf{v} = \mathbf{f}_h</span> to reach <span class="math inline">\mathbf{v}_h</span> via a few iterations of an iterative method like weighted Jacobi or Gauss-Seidel.</p></li>
+<li><p>Restrict the residual <span class="math inline">\mathbf{r}_h = \mathbf{f}_h - \mathbf{A}_h\mathbf{v}_h</span> to the coarse grid by applying a designated restriction operator:</p>
+<p><span class="math display">\mathbf{r}_{2h} = \mathbf{R}_h^{2h}\mathbf{r}_h</span></p></li>
+<li><p>Solve the coarse approximation to the error equation, with homogeneous boundary values:</p>
+<p><span class="math display">\mathbf{A}_{2h}\mathbf{e}_{2h} = \mathbf{r}_{2h}</span></p></li>
+<li><p>Prolongate the coarse correction and update the fine approximation:</p>
+<p><span class="math display">\mathbf{v}_h\leftarrow\mathbf{v}_h+\mathbf{P}_{2h}^h\mathbf{e}_{2h}.</span></p></li>
+<li><p>Apply a few more smoothing sweeps to <span class="math inline">\mathbf{A}_h\mathbf{v}_h=\mathbf{f}_h</span>, starting from the corrected <span class="math inline">\mathbf{v}_h</span>.</p></li>
+</ol>
+<p><em>Note</em>: You may be wondering: how do we find <span class="math inline">\mathbf{A}_{2h}</span>? It turns out, we RAP! Not in the Kendrick Lamar way, but the “let’s restrict and prolongate our fine-level discretization” way. More specifically, we have:</p>
+<p><span class="math display">\mathbf{A}_{2h} = \mathbf{R}_h^{2h}\mathbf{A}_h \mathbf{P}_{2h}^h.</span></p>
+<p>For our fine-grid finite-difference matrix and linear interpolation, the choice <span class="math inline">\mathbf{R}=\mathbf{P}^{\mathsf{T}}</span> gives <span class="math inline">\mathbf{A}_{2h}=2\widetilde{\mathbf{A}}_{2h}</span>, where <span class="math inline">\widetilde{\mathbf{A}}_{2h}</span> is obtained by directly discretizing on spacing <span class="math inline">2h</span>. Full weighting would give <span class="math inline">\widetilde{\mathbf{A}}_{2h}</span> itself. This scaling does not change weighted-Jacobi’s error-propagation matrix, since its diagonal scales by the same factor.</p>
+<p>Here <span class="math inline">\mathbf{A}_h</span> is symmetric positive definite and <span class="math inline">\mathbf{P}</span> has full column rank, so <span class="math inline">\mathbf{P}^{\mathsf{T}}\mathbf{A}_h\mathbf{P}</span> is invertible. For <span class="math inline">\mathbf{R}=\mathbf{P}^{\mathsf{T}}</span> and an exact coarse solve, the fine-space operator <span class="math inline">\mathbf{Q}=\mathbf{P}(\mathbf{P}^{\mathsf{T}}\mathbf{A}_h\mathbf{P})^{-1}\mathbf{P}^{\mathsf{T}}\mathbf{A}_h</span> is the Galerkin projection onto the range of <span class="math inline">\mathbf{P}</span>, orthogonal in the <span class="math inline">\mathbf{A}_h</span> inner product. The error after correction is <span class="math inline">(\mathbf{I}-\mathbf{Q})\mathbf{e}_h</span>. This precisely removes errors in that coarse space, but not arbitrary fine-grid errors.</p>
+</section>
+</section>
+<section id="multigrid-scheme" class="level2">
+<h2 class="anchored" data-anchor-id="multigrid-scheme">Multigrid Scheme</h2>
+<p>A convergent two-grid method can reach the desired algebraic accuracy, but its coarse solve may still be expensive on a large problem. Multigrid addresses that cost by approximately solving the coarse error equation with another two-grid scheme, and repeating this recursively until the coarsest problem is small. Hence <strong>multigrid</strong> (finally)! One way to organize this recursion is a <strong>V-cycle</strong>: visit each coarser grid once, then return through the finer grids, correcting and smoothing along the way.</p>
+<!-- Algorithm formatting: ::: opens/closes the callout; 1., 2., ... make the steps.
+     Use $...$ for inline math. Indent continuation paragraphs by three spaces
+     to keep them inside a numbered step. -->
+<div id="v-cycle-algorithm" class="callout callout-style-simple callout-note no-icon callout-titled" title="Algorithm: one multigrid V-cycle">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Algorithm: one multigrid V-cycle
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Input:</strong> current mesh spacing <span class="math inline">h</span>, right-hand side <span class="math inline">\mathbf{f}_h</span>, and initial approximation <span class="math inline">\mathbf{v}_h</span>.</p>
+<p><strong>Setup:</strong> choose smoothing counts <span class="math inline">\nu_1,\nu_2</span> and construct the grid hierarchy, transfer operators, and coarse matrices <span class="math inline">\mathbf{A}_{2h}=\mathbf{R}_h^{2h}\mathbf{A}_h\mathbf{P}_{2h}^h</span> in advance. Write this routine as <span class="math inline">\operatorname{VCycle}(h,\mathbf{f}_h,\mathbf{v}_h)</span>.</p>
+<ol type="1">
+<li><p><strong>Coarsest grid:</strong> if <span class="math inline">h=h_0</span>, solve <span class="math inline">\mathbf{A}_h\mathbf{v}_h=\mathbf{f}_h</span> directly and <strong>return</strong> <span class="math inline">\mathbf{v}_h</span>.</p></li>
+<li><p><strong>Pre-smooth:</strong> apply <span class="math inline">\nu_1</span> relaxation sweeps to <span class="math inline">\mathbf{A}_h\mathbf{v}_h=\mathbf{f}_h</span>, starting from the current <span class="math inline">\mathbf{v}_h</span>.</p></li>
+<li><p><strong>Compute and restrict the residual:</strong></p>
+<p><span class="math display">
+\mathbf{r}_h=\mathbf{f}_h-\mathbf{A}_h\mathbf{v}_h,
+\qquad
+\mathbf{r}_{2h}=\mathbf{R}_h^{2h}\mathbf{r}_h.
+</span></p></li>
+<li><p><strong>Recurse on the coarse error equation</strong>, starting from zero:</p>
+<p><span class="math display">
+\mathbf{e}_{2h}\leftarrow\operatorname{VCycle}(2h,\mathbf{r}_{2h},\mathbf{0}).
+</span></p></li>
+<li><p><strong>Prolongate and correct:</strong></p>
+<p><span class="math display">
+\mathbf{v}_h\leftarrow\mathbf{v}_h+\mathbf{P}_{2h}^h\mathbf{e}_{2h}.
+</span></p></li>
+<li><p><strong>Post-smooth:</strong> apply <span class="math inline">\nu_2</span> relaxation sweeps to <span class="math inline">\mathbf{A}_h\mathbf{v}_h=\mathbf{f}_h</span>, starting from the corrected approximation.</p></li>
+<li><p><strong>Return</strong> the updated <span class="math inline">\mathbf{v}_h</span>.</p></li>
+</ol>
+</div>
+</div>
+<p>To solve the original problem, repeat V-cycles on the finest grid until <span class="math inline">\|\mathbf{f}_h-\mathbf{A}_h\mathbf{v}_h\|_2\leq\max(\varepsilon_{\mathrm{abs}},\varepsilon_{\mathrm{rel}}\|\mathbf{f}_h\|_2)</span> or a chosen maximum number of cycles is reached. The coarse calls solve for an error correction, so they use homogeneous boundary conditions for this Dirichlet problem.</p>
+</section>
+<section id="watching-a-v-cycle" class="level2">
+<h2 class="anchored" data-anchor-id="watching-a-v-cycle">Watching a V-Cycle</h2>
+<p>The animation follows one cycle through six levels, from <span class="math inline">h=1/64</span> to <span class="math inline">h_0=1/2</span>. On the way down, we smooth and restrict the residual. On the way up, we prolongate the error correction and smooth again. The highlighted node marks the current stage; the notches show its grid. This is an illustration of the traversal, not a plot of error magnitude.</p>
+<div id="fig-v-cycle" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Animated V-shaped path through grids with 64, 32, 16, 8, 4, and 2 intervals. A highlight descends during pre-smoothing and residual restriction, pauses at the coarse solve, and ascends during prolongation, correction, and post-smoothing.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-v-cycle-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="v-cycle.gif" class="img-fluid figure-img" alt="Animated V-shaped path through grids with 64, 32, 16, 8, 4, and 2 intervals. A highlight descends during pre-smoothing and residual restriction, pauses at the coarse solve, and ascends during prolongation, correction, and post-smoothing.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-v-cycle-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: One V-cycle: descend through the grids, solve on the coarsest grid, and return with corrections.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="computational-experiment" class="level2">
+<h2 class="anchored" data-anchor-id="computational-experiment">Computational Experiment</h2>
+<p>For a concrete version of our Poisson problem, take</p>
+<p><span class="math display">
+-u''(x)=\pi^2\sin(\pi x),\qquad u(0)=u(1)=0,
+</span></p>
+<p>whose exact solution is <span class="math inline">u(x)=\sin(\pi x)</span>. The code below starts from zero on a grid with <span class="math inline">n=64</span> intervals and applies V-cycles until the relative residual is below <span class="math inline">10^{-10}</span>. Each cycle uses two weighted-Jacobi sweeps before and after the coarse correction, with <span class="math inline">\omega=2/3</span>.</p>
+<div id="cell-fig-v-cycle-solution" class="cell" data-fig-height="3.4" data-fig-width="9" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hierarchy(n):</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Interior Dirichlet matrices and linear transfer operators."""</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> n <span class="op">&lt;</span> <span class="dv">2</span> <span class="kw">or</span> n <span class="op">&amp;</span> (n <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"n must be a power of two, at least 2"</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> n<span class="op">**</span><span class="dv">2</span> <span class="op">*</span> (<span class="dv">2</span> <span class="op">*</span> np.eye(n <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>                 <span class="op">-</span> np.eye(n <span class="op">-</span> <span class="dv">1</span>, k<span class="op">=</span><span class="dv">1</span>) <span class="op">-</span> np.eye(n <span class="op">-</span> <span class="dv">1</span>, k<span class="op">=-</span><span class="dv">1</span>))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    matrices, transfers <span class="op">=</span> [A], []</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> n <span class="op">&gt;</span> <span class="dv">2</span>:</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        P <span class="op">=</span> np.zeros((n <span class="op">-</span> <span class="dv">1</span>, n <span class="op">//</span> <span class="dv">2</span> <span class="op">-</span> <span class="dv">1</span>))</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> col <span class="kw">in</span> <span class="bu">range</span>(P.shape[<span class="dv">1</span>]):</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>            P[<span class="dv">2</span> <span class="op">*</span> col:<span class="dv">2</span> <span class="op">*</span> col <span class="op">+</span> <span class="dv">3</span>, col] <span class="op">=</span> [<span class="fl">0.5</span>, <span class="dv">1</span>, <span class="fl">0.5</span>]</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        R <span class="op">=</span> P.T</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        matrices.append(R <span class="op">@</span> matrices[<span class="op">-</span><span class="dv">1</span>] <span class="op">@</span> P)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        transfers.append(P)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        n <span class="op">//=</span> <span class="dv">2</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> matrices, transfers</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> smooth(A, b, v, sweeps<span class="op">=</span><span class="dv">2</span>, omega<span class="op">=</span><span class="dv">2</span><span class="op">/</span><span class="dv">3</span>):</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(sweeps):</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        v <span class="op">=</span> v <span class="op">+</span> omega <span class="op">*</span> (b <span class="op">-</span> A <span class="op">@</span> v) <span class="op">/</span> np.diag(A)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> v</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> v_cycle(matrices, transfers, level, b, v):</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> matrices[level]</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> level <span class="op">==</span> <span class="bu">len</span>(matrices) <span class="op">-</span> <span class="dv">1</span>:</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> np.linalg.solve(A, b)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> smooth(A, b, v)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    P <span class="op">=</span> transfers[level]</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    coarse_rhs <span class="op">=</span> P.T <span class="op">@</span> (b <span class="op">-</span> A <span class="op">@</span> v)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    coarse_error <span class="op">=</span> v_cycle(matrices, transfers, level <span class="op">+</span> <span class="dv">1</span>,</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>                           coarse_rhs, np.zeros_like(coarse_rhs))</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> v <span class="op">+</span> P <span class="op">@</span> coarse_error</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> smooth(A, b, v)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">64</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, n <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> np.pi<span class="op">**</span><span class="dv">2</span> <span class="op">*</span> np.sin(np.pi <span class="op">*</span> x[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>matrices, transfers <span class="op">=</span> hierarchy(n)</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>A <span class="op">=</span> matrices[<span class="dv">0</span>]</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>v <span class="op">=</span> np.zeros(n <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>relative_residuals <span class="op">=</span> [np.linalg.norm(b <span class="op">-</span> A <span class="op">@</span> v) <span class="op">/</span> np.linalg.norm(b)]</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cycle <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">50</span>):</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> v_cycle(matrices, transfers, <span class="dv">0</span>, b, v)</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    relative_residuals.append(np.linalg.norm(b <span class="op">-</span> A <span class="op">@</span> v) <span class="op">/</span> np.linalg.norm(b))</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> relative_residuals[<span class="op">-</span><span class="dv">1</span>] <span class="op">&lt;</span> <span class="fl">1e-10</span>:</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="st">"V-cycles did not reach the residual tolerance"</span>)</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the iterative result against a direct solve of the same discrete system.</span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>np.testing.assert_allclose(v, np.linalg.solve(A, b), rtol<span class="op">=</span><span class="fl">1e-9</span>, atol<span class="op">=</span><span class="fl">1e-11</span>)</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"V-cycles: </span><span class="sc">{</span><span class="bu">len</span>(relative_residuals) <span class="op">-</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Final relative residual: </span><span class="sc">{</span>relative_residuals[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.2e}</span><span class="ss">"</span>)</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Maximum error against sin(pi*x): </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">max</span>(np.<span class="bu">abs</span>(v <span class="op">-</span> np.sin(np.pi<span class="op">*</span>x[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>])))<span class="sc">:.2e}</span><span class="ss">"</span>)</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.4</span>))</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>xx <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">500</span>)</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(xx, np.sin(np.pi <span class="op">*</span> xx), color<span class="op">=</span><span class="st">"#8a8a8a"</span>, label<span class="op">=</span><span class="st">"Exact solution"</span>)</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(x, np.r_[<span class="dv">0</span>, v, <span class="dv">0</span>], <span class="st">"."</span>, color<span class="op">=</span><span class="st">"#235789"</span>, label<span class="op">=</span><span class="st">"Multigrid"</span>)</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"x"</span>, ylabel<span class="op">=</span><span class="st">"u(x)"</span>)</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend(frameon<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].semilogy(<span class="bu">range</span>(<span class="bu">len</span>(relative_residuals)), relative_residuals,</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#235789"</span>, markersize<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"Completed V-cycles"</span>, ylabel<span class="op">=</span><span class="st">"Relative residual"</span>)</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axes:</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>    ax.spines[[<span class="st">"top"</span>, <span class="st">"right"</span>]].set_visible(<span class="va">False</span>)</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>    ax.set_facecolor(<span class="st">"none"</span>)</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>fig.patch.set_alpha(<span class="dv">0</span>)</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"savefig.transparent"</span>] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>V-cycles: 10
+Final relative residual: 4.26e-11
+Maximum error against sin(pi*x): 2.01e-04</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-v-cycle-solution" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-v-cycle-solution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-v-cycle-solution-output-2.png" width="855" height="316" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-v-cycle-solution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: The multigrid approximation and exact solution, alongside the relative residual after each V-cycle.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The residual measures how well we solve the <strong>discrete</strong> system. Its convergence does not remove the finite-difference discretization error, which is why the error against <span class="math inline">\sin(\pi x)</span> remains larger. This compact example uses dense matrices for readability; a large multigrid solver would use sparse matrices or stencil operations.</p>
+</section>
+<section id="closing-thoughts" class="level2">
+<h2 class="anchored" data-anchor-id="closing-thoughts">Closing Thoughts</h2>
+<p>Congrats! Now you can brag to your friends and family that you know what all the kids are talking about: multigrid methods. Still, this short series was just a primer on this subfield of numerical analysis, and there is much left unsaid about more “sophisticated” versions of this idea. However, they all rest on the same principles we discussed in these two posts. In future posts, I hope to delve deeper into multigrid and even talk about “neural” multigrid methods (one of my primary research interests).</p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-olson2015multigrid" class="csl-entry" role="listitem">
+Olson, Luke. 2015. <span>“Multigrid Methods: Geometric.”</span> In <em>Encyclopedia of Applied and Computational Mathematics</em>. Springer. <a href="https://doi.org/10.1007/978-3-540-70529-1_338">https://doi.org/10.1007/978-3-540-70529-1_338</a>.
+</div>
+</div>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{benanti2026,
+  author = {Benanti, Alex},
+  title = {Demystifying {Multigrid} {(Part} 2)},
+  date = {2026-09-06},
+  url = {https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/},
+  langid = {en}
+}
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-benanti2026" class="csl-entry quarto-appendix-citeas" role="listitem">
+Benanti, Alex. 2026. <span>“Demystifying Multigrid (Part 2).”</span>
+September 6. <a href="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/">https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/</a>.
+</div></div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/alexbenanti\.github\.io\/Alex-Talks-Scientific-Computing-Machine-Learning\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© 2026 Alex Benanti</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item">
+    <a class="nav-link" href="https://quarto.org/">
+<p>Built with Quarto</p>
+</a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

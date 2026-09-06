@@ -1,6 +1,6 @@
 ---
 title: "About"
-image: assets/IMG_3790 2.HEIC
+image: assets/profile.jpg
 about:
   template: jolla
   image-shape: round

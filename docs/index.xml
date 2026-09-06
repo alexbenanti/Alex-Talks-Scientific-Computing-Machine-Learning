@@ -9,8 +9,877 @@
 <link>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/</link>
 <atom:link href="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/index.xml" rel="self" type="application/rss+xml"/>
 <description>Notes on PDEs, numerical methods, optimization, and scientific machine learning.</description>
-<generator>quarto-1.9.38</generator>
-<lastBuildDate>Tue, 28 Jul 2026 04:00:00 GMT</lastBuildDate>
+<generator>quarto-1.10.18</generator>
+<lastBuildDate>Sun, 06 Sep 2026 04:00:00 GMT</lastBuildDate>
+<item>
+  <title>Demystifying Multigrid (Part 2)</title>
+  <dc:creator>Alex Benanti</dc:creator>
+  <link>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<!-- Draft outline: replace these notes with your own prose as you build the post. -->
+<p>In <a href="../../posts/2026-07-26-demystifying-multigrid/index.html">Part 1</a>, we saw that weighted Jacobi quickly damps oscillatory error but reduces smooth error very slowly. In this post, we will explore how coarse grids help address the error that relaxation leaves behind.</p>
+<section id="recap-and-motivation" class="level2">
+<h2 class="anchored" data-anchor-id="recap-and-motivation">Recap and Motivation</h2>
+<!-- Briefly recall the 1D Poisson problem, the grid notation, and the smoothing result from Part 1. -->
+<p>Let us recall the 1D Poisson problem we saw in Part 1:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Bsplit%7D%0A-u''(x)%20%20&amp;=%20f(x),%5Cquad%200%3Cx%3C1%5C%5C%0Au(0)%20&amp;=%20u(1)%20=%200%0A%5Cend%7Bsplit%7D"></p>
+<p>Take <img src="https://latex.codecogs.com/png.latex?n"> equal intervals, with <img src="https://latex.codecogs.com/png.latex?h=1/n"> and interior nodes <img src="https://latex.codecogs.com/png.latex?x_%5Cell=%5Cell%20h"> for <img src="https://latex.codecogs.com/png.latex?%5Cell=1,%5Cldots,n-1">. The central difference method gives the discrete system: <img src="https://latex.codecogs.com/png.latex?%0A%5Cfrac%7B1%7D%7Bh%5E2%7D%5Cbegin%7Bbmatrix%7D%0A2%20&amp;%20-1%20&amp;%20&amp;%20&amp;%20&amp;%20%5C%5C%0A-1%20&amp;%202%20&amp;%20-1&amp;%20&amp;%20&amp;%20%5C%5C%0A&amp;%20-1%20&amp;%202%20&amp;%20-1%20&amp;%20&amp;%20%5C%5C%0A%20%20&amp;%20%20&amp;%20%5Cddots%20&amp;%20%5Cddots%20&amp;%20%5Cddots%20&amp;%20%5C%5C%0A%20%20&amp;%20%20&amp;%20&amp;%20%5Cddots%20&amp;%20%5Cddots%20&amp;%20%20-1%5C%5C%0A&amp;%20%20&amp;%20&amp;%20%20&amp;%20-1%20&amp;%20%202%5C%5C%0A%5Cend%7Bbmatrix%7D%5Cmathbf%7Bv%7D%20=%20%5Cmathbf%7Bf%7D,%0A"></p>
+<p>with:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BT%7D%20=%20%5Cbegin%7Bbmatrix%7D%0A2%20&amp;%20-1%20&amp;%20&amp;%20&amp;%20&amp;%20%5C%5C%0A-1%20&amp;%202%20&amp;%20-1&amp;%20&amp;%20&amp;%20%5C%5C%0A&amp;%20-1%20&amp;%202%20&amp;%20-1%20&amp;%20&amp;%20%5C%5C%0A%20%20&amp;%20%20&amp;%20%5Cddots%20&amp;%20%5Cddots%20&amp;%20%5Cddots%20&amp;%20%5C%5C%0A%20%20&amp;%20%20&amp;%20&amp;%20%5Cddots%20&amp;%20%5Cddots%20&amp;%20%20-1%5C%5C%0A&amp;%20%20&amp;%20&amp;%20%20&amp;%20-1%20&amp;%20%202%5C%5C%0A%5Cend%7Bbmatrix%7D,%5Cqquad%20%5Cmathbf%7BA%7D_h%20=%20%5Cfrac%7B1%7D%7Bh%5E2%7D%5Cmathbf%7BT%7D."></p>
+<p>Let <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bu%7D_h%5E*"> be the exact solution of this discrete system and <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bv%7D_h%5Ek"> its current iterative approximation. Define the algebraic error by <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Be%7D%5Ek=%5Cmathbf%7Bu%7D_h%5E*-%5Cmathbf%7Bv%7D_h%5Ek">; this is distinct from the error caused by discretizing the PDE.</p>
+<p>Also recall that, for a consistent linear stationary iterative method, we can represent the error after <img src="https://latex.codecogs.com/png.latex?k"> iterations as: <img src="https://latex.codecogs.com/png.latex?%0A%5Cmathbf%7Be%7D%5Ek%20=%20%5Cmathbf%7BG%7D%5Ek%5Cmathbf%7Be%7D%5E0%0A"></p>
+<p>where <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BG%7D%5Cin%5Cmathbb%7BR%7D%5E%7Bm%5Ctimes%20m%7D"> is the error-propagation matrix and <img src="https://latex.codecogs.com/png.latex?m=n-1">. <strong>If <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BG%7D"> is diagonalizable</strong>, we can expand <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Be%7D%5E0=%5Csum_%7Bj=1%7D%5Em%5Calpha_j%5Cboldsymbol%7B%5Cvarphi%7D_j"> in its eigenvector basis and write:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cmathbf%7Be%7D%5Ek%20=%20%5Csum_%7Bj=1%7D%5Em%20%5Calpha_j%20(%5Clambda_j)%5Ek%20%5Cmathbf%7B%5Cvarphi%7D_j.%0A"></p>
+<p>This assumption holds for weighted Jacobi on our 1-D Poisson problem: its error-propagation matrix is symmetric. It does not hold for every stationary iteration.</p>
+<p>The question that remains open from last time is: how do we remove the components of the error associated with eigenvalues for which <img src="https://latex.codecogs.com/png.latex?%7C%5Clambda_j%7C%5Capprox%201">—that is, the parts of the error that decay slowly?</p>
+</section>
+<section id="using-smoothing-effects" class="level2">
+<h2 class="anchored" data-anchor-id="using-smoothing-effects">Using Smoothing Effects</h2>
+<p>To address the low-frequency components of the error, we can use a “coarser” grid. A wave that is smooth relative to the fine-grid spacing varies more rapidly relative to the coarse-grid spacing. No new frequency information is created: we sample the same wave at fewer points. Here, coarsening means increasing the mesh spacing and reducing the number of interior unknowns.</p>
+<p>But this sounds counterintuitive at first. Intuitively, you might assume that a coarser grid provides less usable detail—like watching a movie on a 1970s box TV instead of a modern IMAX screen. However, consider a broad, gentle slope spanning thousands of fine-grid pixels. To a local smoother inspecting adjacent pixels on the IMAX screen, that slope looks nearly flat, so the smoother barely adjusts it.</p>
+<p>When we represent that same smooth error on a coarse grid, the spatial distance between grid points increases. Its physical shape does not change, but its variation from one grid point to the next becomes more pronounced. Some modes that relaxation handles poorly on the fine grid can therefore be reduced more effectively on a coarser grid. The smoothest modes may still need further coarsening. This is how I got myself to understand this nuanced idea, but an actual example may make it clearer.</p>
+<p>Let us again consider the matrix <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BT%7D">. First, we will take <img src="https://latex.codecogs.com/png.latex?n%20=%208">, giving us the following frequencies/modes:</p>
+<p>With the convention from Part 1, <img src="https://latex.codecogs.com/png.latex?n=8"> means eight grid intervals and seven interior unknowns. The eigenmodes are <img src="https://latex.codecogs.com/png.latex?v_%5Cell%5E%7B(j)%7D=%5Csin(%5Cpi%20j%5Cell/8)"> for <img src="https://latex.codecogs.com/png.latex?j=1,%5Cldots,7">.</p>
+<div id="fig-eigenmodes-n8" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Seven panels of sine curves sampled on a grid with spacing one eighth. Modes one through seven oscillate increasingly rapidly.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eigenmodes-n8-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/eigenmodes-n8.png" class="img-fluid figure-img" alt="Seven panels of sine curves sampled on a grid with spacing one eighth. Modes one through seven oscillate increasingly rapidly.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eigenmodes-n8-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Eigenmodes for <img src="https://latex.codecogs.com/png.latex?j=1,%5Cldots,7"> with <img src="https://latex.codecogs.com/png.latex?n=8">. The dots show the grid values; the smooth sine curves are visual guides.
+</figcaption>
+</figure>
+</div>
+<p>Now consider <img src="https://latex.codecogs.com/png.latex?n=4">: the grid spacing is <img src="https://latex.codecogs.com/png.latex?h=1/4">, and there are three interior unknowns. The corresponding eigenmodes are <img src="https://latex.codecogs.com/png.latex?v_%5Cell%5E%7B(j)%7D=%5Csin(%5Cpi%20j%5Cell/4)"> for <img src="https://latex.codecogs.com/png.latex?j=1,2,3">.</p>
+<div id="fig-eigenmodes-n4" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Three panels of sine curves sampled on a grid with spacing one quarter. Modes one through three oscillate increasingly rapidly.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eigenmodes-n4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/eigenmodes-n4.png" class="img-fluid figure-img" alt="Three panels of sine curves sampled on a grid with spacing one quarter. Modes one through three oscillate increasingly rapidly.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eigenmodes-n4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Eigenmodes for <img src="https://latex.codecogs.com/png.latex?j=1,2,3"> with <img src="https://latex.codecogs.com/png.latex?n=4">. The dots show the grid values; the smooth sine curves are visual guides.
+</figcaption>
+</figure>
+</div>
+<p>Of course, the plots look the same, but our evaluation points become fewer and farther apart. With this new discretization, <img src="https://latex.codecogs.com/png.latex?j=1"> remains a smooth mode, while modes <img src="https://latex.codecogs.com/png.latex?j=2"> and <img src="https://latex.codecogs.com/png.latex?j=3"> now become higher-frequency modes. But… why?</p>
+</section>
+<section id="why-a-coarser-grid-helps" class="level2">
+<h2 class="anchored" data-anchor-id="why-a-coarser-grid-helps">Why a Coarser Grid Helps</h2>
+<p>Let us consider the <img src="https://latex.codecogs.com/png.latex?j=2"> case from the previous example. The fine grid has spacing <img src="https://latex.codecogs.com/png.latex?h=1/8"> and <img src="https://latex.codecogs.com/png.latex?n=8"> intervals; the coarse grid has spacing <img src="https://latex.codecogs.com/png.latex?H=2h=1/4"> and <img src="https://latex.codecogs.com/png.latex?N=n/2=4"> intervals. On the fine grid, this mode has components</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Av_%7Bh,%5Cell%7D%5E%7B(2)%7D=%5Csin%5Cleft(%5Cfrac%7B2%5Cpi%5Cell%7D%7B8%7D%5Cright).%0A"></p>
+<p>Its dimensionless angular frequency is <img src="https://latex.codecogs.com/png.latex?%5Ctheta_h=%5Cpi%20j/n=%5Cpi/4">, so <img src="https://latex.codecogs.com/png.latex?j/n=1/4"> is its frequency relative to the grid’s Nyquist limit <img src="https://latex.codecogs.com/png.latex?%5Ctheta=%5Cpi">. This measures oscillation relative to the mesh spacing, not a fraction of the grid’s eigenmodes.</p>
+<p>To isolate the sampling effect, retain every second fine-grid value (a transfer called <strong>injection</strong>). Coarse index <img src="https://latex.codecogs.com/png.latex?%5Cell"> corresponds to fine index <img src="https://latex.codecogs.com/png.latex?2%5Cell">, giving</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Av_%7BH,%5Cell%7D%5E%7B(2)%7D=v_%7Bh,2%5Cell%7D%5E%7B(2)%7D%0A=%5Csin%5Cleft(%5Cfrac%7B2%5Cpi(2%5Cell)%7D%7B8%7D%5Cright)%0A=%5Csin%5Cleft(%5Cfrac%7B2%5Cpi%5Cell%7D%7B4%7D%5Cright),%5Cqquad%20%5Cell=0,%5Cldots,N.%0A"></p>
+<p>The normalized frequency is now <img src="https://latex.codecogs.com/png.latex?j/N=1/2">, at the start of the coarse grid’s high-frequency band. The physical wave has not changed; its angular frequency per grid step has doubled.</p>
+<p>For weighted Jacobi with <img src="https://latex.codecogs.com/png.latex?%5Comega=2/3">, the amplification factor for mode <img src="https://latex.codecogs.com/png.latex?j"> on a grid with <img src="https://latex.codecogs.com/png.latex?n"> intervals is</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cgamma_j%5E%7B(n)%7D=1-%5Cfrac%7B4%7D%7B3%7D%5Csin%5E2%5Cleft(%5Cfrac%7B%5Cpi%20j%7D%7B2n%7D%5Cright).%0A"></p>
+<p>Thus <img src="https://latex.codecogs.com/png.latex?%5Cgamma_2%5E%7B(8)%7D%5Capprox0.805">, whereas <img src="https://latex.codecogs.com/png.latex?%5Cgamma_2%5E%7B(4)%7D=1/3">. One sweep reduces this mode’s amplitude much more on the coarse grid. More generally, <img src="https://latex.codecogs.com/png.latex?%7C%5Cgamma_j%5E%7B(n)%7D%7C%5Cleq1/3"> for <img src="https://latex.codecogs.com/png.latex?n/2%5Cleq%20j%5Cleq%20n-1">. This smoothing statement is specific to the weighted-Jacobi choice above; ordinary Jacobi does not uniformly damp the high-frequency modes.</p>
+<p>In the actual multigrid algorithm, we restrict the <strong>residual</strong> and solve a coarse error equation. Injection here illustrates the frequency change; the weighted restriction introduced below also changes the mode amplitudes.</p>
+</section>
+<section id="what-happens-to-fine-high-frequencies" class="level2">
+<h2 class="anchored" data-anchor-id="what-happens-to-fine-high-frequencies">What Happens to Fine High Frequencies?</h2>
+<p>What if we consider <img src="https://latex.codecogs.com/png.latex?j=5">? This mode is already high-frequency on the fine grid. Can its coarse samples distinguish it from every lower-frequency mode? (Try to answer this yourself.)</p>
+<p>Answer in 3…2…1…</p>
+<p><em>NO!</em> The coarse grid has only three independent interior modes. The fine-grid <img src="https://latex.codecogs.com/png.latex?j=5"> mode becomes indistinguishable, up to a sign, from the coarse-grid <img src="https://latex.codecogs.com/png.latex?j=3"> mode. For <img src="https://latex.codecogs.com/png.latex?N=4">, its samples are</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Av_%7Bh,2%5Cell%7D%5E%7B(5)%7D=%5Csin%5Cleft(%5Cfrac%7B5%5Cpi%5Cell%7D%7BN%7D%5Cright).%0A"></p>
+<p>Using the sine difference identity,</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cbegin%7Baligned%7D%0A%5Csin%5Cleft(%5Cfrac%7B(2N-5)%5Cpi%5Cell%7D%7BN%7D%5Cright)%0A&amp;=%5Csin%5Cleft(2%5Cpi%5Cell-%5Cfrac%7B5%5Cpi%5Cell%7D%7BN%7D%5Cright)%5C%5C%0A&amp;=%5Csin(2%5Cpi%5Cell)%5Ccos%5Cleft(%5Cfrac%7B5%5Cpi%5Cell%7D%7BN%7D%5Cright)%0A-%5Ccos(2%5Cpi%5Cell)%5Csin%5Cleft(%5Cfrac%7B5%5Cpi%5Cell%7D%7BN%7D%5Cright)%5C%5C%0A&amp;=-%5Csin%5Cleft(%5Cfrac%7B5%5Cpi%5Cell%7D%7BN%7D%5Cright).%0A%5Cend%7Baligned%7D%0A"></p>
+<p>Hence <img src="https://latex.codecogs.com/png.latex?v_%7Bh,2%5Cell%7D%5E%7B(5)%7D=-v_%7BH,%5Cell%7D%5E%7B(3)%7D">. This is <strong>aliasing</strong>: different fine-grid modes give the same coarse samples up to a scalar factor.</p>
+<p>More generally, for <img src="https://latex.codecogs.com/png.latex?N%3Cj%5Cleq%20n-1"> and <img src="https://latex.codecogs.com/png.latex?n=2N">,</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Av_%7Bh,2%5Cell%7D%5E%7B(j)%7D=-v_%7BH,%5Cell%7D%5E%7B(n-j)%7D.%0A"></p>
+<p>The boundary case <img src="https://latex.codecogs.com/png.latex?j=N=n/2"> is different: all its coarse samples are <img src="https://latex.codecogs.com/png.latex?%5Csin(%5Cpi%5Cell)=0">. The coarse grid therefore cannot represent every fine-grid error component independently. Notice also that an aliased mode need not be low-frequency on the coarse grid: in our example, <img src="https://latex.codecogs.com/png.latex?j=3"> is its highest mode.</p>
+<p>This motivates the main idea behind multigrid methods:</p>
+<ol type="1">
+<li><p>Use a few weighted-Jacobi sweeps on <img src="https://latex.codecogs.com/png.latex?%5COmega%5Eh"> to reduce high-frequency error before transferring information to a coarser grid.</p></li>
+<li><p>Restrict the residual to <img src="https://latex.codecogs.com/png.latex?%5COmega%5E%7B2h%7D"> and approximately solve the coarse error equation. Prolongate that correction to reduce error that was smooth on the fine grid.</p></li>
+<li><p>Apply the same idea recursively on <img src="https://latex.codecogs.com/png.latex?%5COmega%5E%7B4h%7D,%5COmega%5E%7B8h%7D,%5Cldots">, solving directly on the coarsest grid. Return through the levels with corrections and post-smoothing, then repeat cycles until the desired tolerance is reached. A finite number of sweeps does not generally eliminate all error exactly.</p></li>
+</ol>
+</section>
+<section id="the-four-corners-of-multigrid" class="level2">
+<h2 class="anchored" data-anchor-id="the-four-corners-of-multigrid">The Four Corners of Multigrid</h2>
+<div class="callout callout-style-simple callout-note no-icon callout-titled" title="A note on the reference">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A note on the reference
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The framework below draws on <span class="citation" data-cites="olson2015multigrid">Olson (2015)</span>, particularly the discussion of smoothing, grid-transfer operators, and Galerkin coarse-grid correction. The <a href="https://lukeo.cs.illinois.edu/files/2015_Ol_encmg.pdf">author’s manuscript</a> is freely available. I use different notation here: <img src="https://latex.codecogs.com/png.latex?n"> counts grid intervals, and <img src="https://latex.codecogs.com/png.latex?h_0"> denotes the coarsest mesh spacing.</p>
+</div>
+</div>
+<section id="hierarchy-of-grids" class="level3">
+<h3 class="anchored" data-anchor-id="hierarchy-of-grids">Hierarchy of Grids</h3>
+<p>Let us assume that we have a hierarchy of grids. We start from the finest grid with a mesh size of <img src="https://latex.codecogs.com/png.latex?h">. Then, the grid on the next level will have a mesh size of <img src="https://latex.codecogs.com/png.latex?2h">, the one after that <img src="https://latex.codecogs.com/png.latex?4h">, etc. For the coarsest grid, we denote it by <img src="https://latex.codecogs.com/png.latex?h_0%20=%202%5E%7BL-1%7Dh"> (where <img src="https://latex.codecogs.com/png.latex?L"> is the number of levels we have). The physical grid at the finest level will be denoted as <img src="https://latex.codecogs.com/png.latex?%5COmega%5Eh"> and <img src="https://latex.codecogs.com/png.latex?%5COmega%5E%7Bh_0%7D"> is the grid at the coarsest level.</p>
+<p>We choose nested grids so that each coarse node is a fine node. For the examples here, <img src="https://latex.codecogs.com/png.latex?n"> is a power of two and the coarsest grid has two intervals, leaving one interior unknown.</p>
+<div id="fig-grid-hierarchy" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Four aligned one-dimensional grids labeled Omega h, Omega 2h, Omega 4h, and Omega h-zero equals Omega 8h. From finest to coarsest, they have 16, 8, 4, and 2 equal intervals, with notches at every grid point and labeled spacing brackets.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-grid-hierarchy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/grid-hierarchy.png" class="img-fluid figure-img" alt="Four aligned one-dimensional grids labeled Omega h, Omega 2h, Omega 4h, and Omega h-zero equals Omega 8h. From finest to coarsest, they have 16, 8, 4, and 2 equal intervals, with notches at every grid point and labeled spacing brackets.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-grid-hierarchy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: A four-level hierarchy on <img src="https://latex.codecogs.com/png.latex?%5B0,1%5D"> with <img src="https://latex.codecogs.com/png.latex?h=1/16"> and <img src="https://latex.codecogs.com/png.latex?h_0=8h=1/2">. Each notch marks a grid point. Each coarser grid retains every second point of the preceding grid, doubling the mesh spacing.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="interpolationprolongation" class="level3">
+<h3 class="anchored" data-anchor-id="interpolationprolongation">Interpolation/Prolongation</h3>
+<p>We have spoken much about these different grid discretizations, but we have yet to discuss how we actually TRANSFER between these discretizations. First, we will discuss the operator that brings us from a coarse grid to the finer grid at the next level up. This is called the <strong>interpolation/prolongation operator</strong>. It maps values defined on the coarse grid to values on the fine grid. For <img src="https://latex.codecogs.com/png.latex?n=2N"> intervals and homogeneous Dirichlet boundary values, its action on the interior vectors is:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BP%7D_%7B2h%7D%5Eh:%20%5Cmathbb%7BR%7D%5E%7BN-1%7D%20%5Crightarrow%20%5Cmathbb%7BR%7D%5E%7Bn-1%7D."></p>
+<p>Then, for quantities <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bx%7D_h"> and <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bx%7D_%7B2h%7D"> defined on grids <img src="https://latex.codecogs.com/png.latex?%5COmega%5Eh"> and <img src="https://latex.codecogs.com/png.latex?%5COmega%5E%7B2h%7D"> respectively, we can define the explicit prolongation as:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BP%7D_%7B2h%7D%5Eh%5Cmathbf%7Bx%7D_%7B2h%7D%20=%20%5Cmathbf%7Bx%7D_h"></p>
+<p>Designing prolongation matrices is a major research subfield of multigrid methods (to be discussed in later posts). For now, though, let us consider a simple example: linear interpolation.</p>
+<p>At the even points on the fine grid, we copy the coarse values: <img src="https://latex.codecogs.com/png.latex?v_%7Bh,2%5Cell%7D=v_%7B2h,%5Cell%7D"> for <img src="https://latex.codecogs.com/png.latex?%5Cell=0,%5Cldots,N">. At the odd points, we interpolate between adjacent coarse values. These are estimates of the missing values, not a recovery of arbitrary fine-grid data. Linear interpolation gives:</p>
+<p><img src="https://latex.codecogs.com/png.latex?v_%7Bh,2%5Cell+1%7D%20=%20%5Cfrac%7B1%7D%7B2%7D(v_%7B2h,%5Cell%7D%20+%20v_%7B2h,%5Cell+1%7D),%5Cqquad%20%5Cell=0,%5Cldots,N-1."></p>
+<p>With <img src="https://latex.codecogs.com/png.latex?v_%7B2h,0%7D=v_%7B2h,N%7D=0">, the matrix acting on the interior values for <img src="https://latex.codecogs.com/png.latex?N=4"> and <img src="https://latex.codecogs.com/png.latex?n=8"> is:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BP%7D_%7B2h%7D%5Eh%5Cmathbf%7Bv%7D_%7B2h%7D%20=%20%5Cfrac%7B1%7D%7B2%7D%5Cbegin%7Bbmatrix%7D%0A1%20&amp;%20&amp;%20%5C%5C%0A2%20&amp;%20&amp;%20%5C%5C%0A1%20&amp;%201%20&amp;%20%5C%5C%0A%20%20&amp;%202%20&amp;%20%5C%5C%0A%20%20&amp;%201%20&amp;%201%5C%5C%0A%20%20&amp;%20&amp;%202%5C%5C%0A%20%20&amp;%20&amp;%201%0A%5Cend%7Bbmatrix%7D%5Cbegin%7Bbmatrix%7D%0A%5Cmathbf%7Bv%7D_%7B2h,1%7D%5C%5C%0A%5Cmathbf%7Bv%7D_%7B2h,2%7D%5C%5C%0A%5Cmathbf%7Bv%7D_%7B2h,3%7D%0A%5Cend%7Bbmatrix%7D%20=%20%5Cbegin%7Bbmatrix%7D%0A%5Cmathbf%7Bv%7D_%7Bh,1%7D%5C%5C%0A%5Cmathbf%7Bv%7D_%7Bh,2%7D%5C%5C%0A%5Cvdots%5C%5C%0A%5Cmathbf%7Bv%7D_%7Bh,7%7D%0A%5Cend%7Bbmatrix%7D"></p>
+<div id="fig-prolongation" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Coarse grid values 0, 1, 0.5, 1.5, 0 are prolonged from four intervals to eight. An arrow labeled P from 2h to h leads to the fine grid, where blue circles retain those values and orange diamonds add midpoint values 0.5, 0.75, 1, and 0.75.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-prolongation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/prolongation.png" class="img-fluid figure-img" alt="Coarse grid values 0, 1, 0.5, 1.5, 0 are prolonged from four intervals to eight. An arrow labeled P from 2h to h leads to the fine grid, where blue circles retain those values and orange diamonds add midpoint values 0.5, 0.75, 1, and 0.75.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-prolongation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Linear prolongation from four to eight intervals, with zero boundary values. New fine-grid values lie on the same piecewise-linear interpolant.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="restriction" class="level3">
+<h3 class="anchored" data-anchor-id="restriction">Restriction</h3>
+<p>The operator that transfers fine-grid values to the coarse grid is called <strong>restriction</strong>. For the same interior vector spaces, it has the mapping:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BR%7D_h%5E%7B2h%7D:%20%5Cmathbb%7BR%7D%5E%7Bn-1%7D%20%5Crightarrow%20%5Cmathbb%7BR%7D%5E%7BN-1%7D."></p>
+<p>More specifically, we can write the restriction as:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BR%7D_h%5E%7B2h%7D%5Cmathbf%7Bx%7D_h%20=%5Cmathbf%7Bx%7D_%7B2h%7D"></p>
+<p>As with prolongation, there are many restriction operators. Here we choose <strong>transpose restriction</strong>, <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BR%7D=%5Cmathbf%7BP%7D%5E%7B%5Cmathsf%7BT%7D%7D">, which is commonly paired with the Galerkin coarse operator <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_%7B2h%7D=%5Cmathbf%7BP%7D%5E%7B%5Cmathsf%7BT%7D%7D%5Cmathbf%7BA%7D_h%5Cmathbf%7BP%7D">. Restriction alone is not the Galerkin projection. Using our prolongation matrix gives:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BR%7D_h%5E%7B2h%7D%5Cmathbf%7Bv%7D_h%20=%20%5Cfrac%7B1%7D%7B2%7D%5Cbegin%7Bbmatrix%7D%0A1%20&amp;%202%20&amp;%201%20&amp;%20%20%20&amp;%20%20%20&amp;%20%20&amp;%20%5C%5C%0A%20%20&amp;%20%20%20&amp;%201%20&amp;%202%20&amp;%201%20&amp;%20%20&amp;%20%5C%5C%0A%20%20&amp;%20%20%20&amp;%20%20%20&amp;%20%20%20&amp;%201%20&amp;%202%20&amp;%201%0A%5Cend%7Bbmatrix%7D%5Cbegin%7Bbmatrix%7D%0A%5Cmathbf%7Bv%7D_%7Bh,1%7D%5C%5C%0A%5Cmathbf%7Bv%7D_%7Bh,2%7D%5C%5C%0A%5Cvdots%5C%5C%0A%5Cmathbf%7Bv%7D_%7Bh,7%7D%0A%5Cend%7Bbmatrix%7D%20=%20%5Cbegin%7Bbmatrix%7D%0A%5Cmathbf%7Bv%7D_%7B2h,1%7D%5C%5C%0A%5Cmathbf%7Bv%7D_%7B2h,2%7D%5C%5C%0A%5Cmathbf%7Bv%7D_%7B2h,3%7D%0A%5Cend%7Bbmatrix%7D"></p>
+<div id="fig-restriction" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Fine-grid values 0, 0.5, 1, 0.75, 0.5, 1, 1.5, 0.75, 0 on the left are mapped by R from h to 2h to coarse-grid values 0, 1.625, 1.375, 2.375, 0 on the right.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-restriction-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/restriction.png" class="img-fluid figure-img" alt="Fine-grid values 0, 0.5, 1, 0.75, 0.5, 1, 1.5, 0.75, 0 on the left are mapped by R from h to 2h to coarse-grid values 0, 1.625, 1.375, 2.375, 0 on the right.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-restriction-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Restriction from eight to four intervals using the matrix <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BR%7D=%5Cmathbf%7BP%7D%5E%7B%5Cmathsf%7BT%7D%7D"> above. Each interior coarse value is a weighted sum with weights <img src="https://latex.codecogs.com/png.latex?(1/2,1,1/2)">; the boundary values remain zero. Both panels use the same vertical scale.
+</figcaption>
+</figure>
+</div>
+<p>The weights here are <img src="https://latex.codecogs.com/png.latex?(1/2,1,1/2)">, a weighted <strong>sum</strong>. The common 1-D <strong>full-weighting</strong> choice instead uses <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BR%7D_%7B%5Cmathrm%7BFW%7D%7D=%5Ctfrac12%5Cmathbf%7BP%7D%5E%7B%5Cmathsf%7BT%7D%7D">, with weights <img src="https://latex.codecogs.com/png.latex?(1/4,1/2,1/4)">. We use transpose restriction throughout this post, including the code. With either convention, form both the coarse matrix <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_%7B2h%7D=%5Cmathbf%7BR%7D%5Cmathbf%7BA%7D_h%5Cmathbf%7BP%7D"> and the coarse right-hand side <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Br%7D_%7B2h%7D=%5Cmathbf%7BR%7D%5Cmathbf%7Br%7D_h"> consistently. Multiplying both by the same nonzero scalar leaves the exact coarse correction unchanged.</p>
+</section>
+<section id="iterative-methods-and-the-two-grid-scheme" class="level3">
+<h3 class="anchored" data-anchor-id="iterative-methods-and-the-two-grid-scheme">Iterative Methods and the Two-Grid Scheme</h3>
+<p>We have already discussed iterative methods a bit, but some additional context is needed to better understand how they fit into the entire “multigrid” story. On the finest grid we solve for the solution; on coarser grids we approximately solve error equations. You may or may not know, from numerical linear algebra, that one way we can find crude approximations to the solutions of linear systems is through iterative methods (as was discussed a bit in Part 1). Let’s say, for example, we had a simple <strong>two-grid</strong> scheme. That is, we have a single fine grid and a single coarse grid. Then, the algorithm would proceed as follows:</p>
+<p>With our error convention, <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Be%7D_h=%5Cmathbf%7Bu%7D_h%5E*-%5Cmathbf%7Bv%7D_h"> and <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Br%7D_h=%5Cmathbf%7Bf%7D_h-%5Cmathbf%7BA%7D_h%5Cmathbf%7Bv%7D_h"> satisfy <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_h%5Cmathbf%7Be%7D_h=%5Cmathbf%7Br%7D_h">. This explains why we solve for a coarse error correction and <strong>add</strong> its prolongation to the current approximation.</p>
+<ol type="1">
+<li><p>Iterate on the fine-level problem <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_h%20%5Cmathbf%7Bv%7D%20=%20%5Cmathbf%7Bf%7D_h"> to reach <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bv%7D_h"> via a few iterations of an iterative method like weighted Jacobi or Gauss-Seidel.</p></li>
+<li><p>Restrict the residual <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Br%7D_h%20=%20%5Cmathbf%7Bf%7D_h%20-%20%5Cmathbf%7BA%7D_h%5Cmathbf%7Bv%7D_h"> to the coarse grid by applying a designated restriction operator:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Br%7D_%7B2h%7D%20=%20%5Cmathbf%7BR%7D_h%5E%7B2h%7D%5Cmathbf%7Br%7D_h"></p></li>
+<li><p>Solve the coarse approximation to the error equation, with homogeneous boundary values:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_%7B2h%7D%5Cmathbf%7Be%7D_%7B2h%7D%20=%20%5Cmathbf%7Br%7D_%7B2h%7D"></p></li>
+<li><p>Prolongate the coarse correction and update the fine approximation:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bv%7D_h%5Cleftarrow%5Cmathbf%7Bv%7D_h+%5Cmathbf%7BP%7D_%7B2h%7D%5Eh%5Cmathbf%7Be%7D_%7B2h%7D."></p></li>
+<li><p>Apply a few more smoothing sweeps to <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_h%5Cmathbf%7Bv%7D_h=%5Cmathbf%7Bf%7D_h">, starting from the corrected <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bv%7D_h">.</p></li>
+</ol>
+<p><em>Note</em>: You may be wondering: how do we find <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_%7B2h%7D">? It turns out, we RAP! Not in the Kendrick Lamar way, but the “let’s restrict and prolongate our fine-level discretization” way. More specifically, we have:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_%7B2h%7D%20=%20%5Cmathbf%7BR%7D_h%5E%7B2h%7D%5Cmathbf%7BA%7D_h%20%5Cmathbf%7BP%7D_%7B2h%7D%5Eh."></p>
+<p>For our fine-grid finite-difference matrix and linear interpolation, the choice <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BR%7D=%5Cmathbf%7BP%7D%5E%7B%5Cmathsf%7BT%7D%7D"> gives <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_%7B2h%7D=2%5Cwidetilde%7B%5Cmathbf%7BA%7D%7D_%7B2h%7D">, where <img src="https://latex.codecogs.com/png.latex?%5Cwidetilde%7B%5Cmathbf%7BA%7D%7D_%7B2h%7D"> is obtained by directly discretizing on spacing <img src="https://latex.codecogs.com/png.latex?2h">. Full weighting would give <img src="https://latex.codecogs.com/png.latex?%5Cwidetilde%7B%5Cmathbf%7BA%7D%7D_%7B2h%7D"> itself. This scaling does not change weighted-Jacobi’s error-propagation matrix, since its diagonal scales by the same factor.</p>
+<p>Here <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_h"> is symmetric positive definite and <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BP%7D"> has full column rank, so <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BP%7D%5E%7B%5Cmathsf%7BT%7D%7D%5Cmathbf%7BA%7D_h%5Cmathbf%7BP%7D"> is invertible. For <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BR%7D=%5Cmathbf%7BP%7D%5E%7B%5Cmathsf%7BT%7D%7D"> and an exact coarse solve, the fine-space operator <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BQ%7D=%5Cmathbf%7BP%7D(%5Cmathbf%7BP%7D%5E%7B%5Cmathsf%7BT%7D%7D%5Cmathbf%7BA%7D_h%5Cmathbf%7BP%7D)%5E%7B-1%7D%5Cmathbf%7BP%7D%5E%7B%5Cmathsf%7BT%7D%7D%5Cmathbf%7BA%7D_h"> is the Galerkin projection onto the range of <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BP%7D">, orthogonal in the <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_h"> inner product. The error after correction is <img src="https://latex.codecogs.com/png.latex?(%5Cmathbf%7BI%7D-%5Cmathbf%7BQ%7D)%5Cmathbf%7Be%7D_h">. This precisely removes errors in that coarse space, but not arbitrary fine-grid errors.</p>
+</section>
+</section>
+<section id="multigrid-scheme" class="level2">
+<h2 class="anchored" data-anchor-id="multigrid-scheme">Multigrid Scheme</h2>
+<p>A convergent two-grid method can reach the desired algebraic accuracy, but its coarse solve may still be expensive on a large problem. Multigrid addresses that cost by approximately solving the coarse error equation with another two-grid scheme, and repeating this recursively until the coarsest problem is small. Hence <strong>multigrid</strong> (finally)! One way to organize this recursion is a <strong>V-cycle</strong>: visit each coarser grid once, then return through the finer grids, correcting and smoothing along the way.</p>
+<!-- Algorithm formatting: ::: opens/closes the callout; 1., 2., ... make the steps.
+     Use $...$ for inline math. Indent continuation paragraphs by three spaces
+     to keep them inside a numbered step. -->
+<div id="v-cycle-algorithm" class="callout callout-style-simple callout-note no-icon callout-titled" title="Algorithm: one multigrid V-cycle">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Algorithm: one multigrid V-cycle
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Input:</strong> current mesh spacing <img src="https://latex.codecogs.com/png.latex?h">, right-hand side <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bf%7D_h">, and initial approximation <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bv%7D_h">.</p>
+<p><strong>Setup:</strong> choose smoothing counts <img src="https://latex.codecogs.com/png.latex?%5Cnu_1,%5Cnu_2"> and construct the grid hierarchy, transfer operators, and coarse matrices <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_%7B2h%7D=%5Cmathbf%7BR%7D_h%5E%7B2h%7D%5Cmathbf%7BA%7D_h%5Cmathbf%7BP%7D_%7B2h%7D%5Eh"> in advance. Write this routine as <img src="https://latex.codecogs.com/png.latex?%5Coperatorname%7BVCycle%7D(h,%5Cmathbf%7Bf%7D_h,%5Cmathbf%7Bv%7D_h)">.</p>
+<ol type="1">
+<li><p><strong>Coarsest grid:</strong> if <img src="https://latex.codecogs.com/png.latex?h=h_0">, solve <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_h%5Cmathbf%7Bv%7D_h=%5Cmathbf%7Bf%7D_h"> directly and <strong>return</strong> <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bv%7D_h">.</p></li>
+<li><p><strong>Pre-smooth:</strong> apply <img src="https://latex.codecogs.com/png.latex?%5Cnu_1"> relaxation sweeps to <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_h%5Cmathbf%7Bv%7D_h=%5Cmathbf%7Bf%7D_h">, starting from the current <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bv%7D_h">.</p></li>
+<li><p><strong>Compute and restrict the residual:</strong></p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cmathbf%7Br%7D_h=%5Cmathbf%7Bf%7D_h-%5Cmathbf%7BA%7D_h%5Cmathbf%7Bv%7D_h,%0A%5Cqquad%0A%5Cmathbf%7Br%7D_%7B2h%7D=%5Cmathbf%7BR%7D_h%5E%7B2h%7D%5Cmathbf%7Br%7D_h.%0A"></p></li>
+<li><p><strong>Recurse on the coarse error equation</strong>, starting from zero:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cmathbf%7Be%7D_%7B2h%7D%5Cleftarrow%5Coperatorname%7BVCycle%7D(2h,%5Cmathbf%7Br%7D_%7B2h%7D,%5Cmathbf%7B0%7D).%0A"></p></li>
+<li><p><strong>Prolongate and correct:</strong></p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cmathbf%7Bv%7D_h%5Cleftarrow%5Cmathbf%7Bv%7D_h+%5Cmathbf%7BP%7D_%7B2h%7D%5Eh%5Cmathbf%7Be%7D_%7B2h%7D.%0A"></p></li>
+<li><p><strong>Post-smooth:</strong> apply <img src="https://latex.codecogs.com/png.latex?%5Cnu_2"> relaxation sweeps to <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7BA%7D_h%5Cmathbf%7Bv%7D_h=%5Cmathbf%7Bf%7D_h">, starting from the corrected approximation.</p></li>
+<li><p><strong>Return</strong> the updated <img src="https://latex.codecogs.com/png.latex?%5Cmathbf%7Bv%7D_h">.</p></li>
+</ol>
+</div>
+</div>
+<p>To solve the original problem, repeat V-cycles on the finest grid until <img src="https://latex.codecogs.com/png.latex?%5C%7C%5Cmathbf%7Bf%7D_h-%5Cmathbf%7BA%7D_h%5Cmathbf%7Bv%7D_h%5C%7C_2%5Cleq%5Cmax(%5Cvarepsilon_%7B%5Cmathrm%7Babs%7D%7D,%5Cvarepsilon_%7B%5Cmathrm%7Brel%7D%7D%5C%7C%5Cmathbf%7Bf%7D_h%5C%7C_2)"> or a chosen maximum number of cycles is reached. The coarse calls solve for an error correction, so they use homogeneous boundary conditions for this Dirichlet problem.</p>
+</section>
+<section id="watching-a-v-cycle" class="level2">
+<h2 class="anchored" data-anchor-id="watching-a-v-cycle">Watching a V-Cycle</h2>
+<p>The animation follows one cycle through six levels, from <img src="https://latex.codecogs.com/png.latex?h=1/64"> to <img src="https://latex.codecogs.com/png.latex?h_0=1/2">. On the way down, we smooth and restrict the residual. On the way up, we prolongate the error correction and smooth again. The highlighted node marks the current stage; the notches show its grid. This is an illustration of the traversal, not a plot of error magnitude.</p>
+<div id="fig-v-cycle" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Animated V-shaped path through grids with 64, 32, 16, 8, 4, and 2 intervals. A highlight descends during pre-smoothing and residual restriction, pauses at the coarse solve, and ascends during prolongation, correction, and post-smoothing.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-v-cycle-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/v-cycle.gif" class="img-fluid figure-img" alt="Animated V-shaped path through grids with 64, 32, 16, 8, 4, and 2 intervals. A highlight descends during pre-smoothing and residual restriction, pauses at the coarse solve, and ascends during prolongation, correction, and post-smoothing.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-v-cycle-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: One V-cycle: descend through the grids, solve on the coarsest grid, and return with corrections.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="computational-experiment" class="level2">
+<h2 class="anchored" data-anchor-id="computational-experiment">Computational Experiment</h2>
+<p>For a concrete version of our Poisson problem, take</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A-u''(x)=%5Cpi%5E2%5Csin(%5Cpi%20x),%5Cqquad%20u(0)=u(1)=0,%0A"></p>
+<p>whose exact solution is <img src="https://latex.codecogs.com/png.latex?u(x)=%5Csin(%5Cpi%20x)">. The code below starts from zero on a grid with <img src="https://latex.codecogs.com/png.latex?n=64"> intervals and applies V-cycles until the relative residual is below <img src="https://latex.codecogs.com/png.latex?10%5E%7B-10%7D">. Each cycle uses two weighted-Jacobi sweeps before and after the coarse correction, with <img src="https://latex.codecogs.com/png.latex?%5Comega=2/3">.</p>
+<div id="cell-fig-v-cycle-solution" class="cell" data-fig-height="3.4" data-fig-width="9" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> numpy <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> np</span>
+<span id="cb1-2"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> matplotlib.pyplot <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> plt</span>
+<span id="cb1-3"></span>
+<span id="cb1-4"></span>
+<span id="cb1-5"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> hierarchy(n):</span>
+<span id="cb1-6">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">"""Interior Dirichlet matrices and linear transfer operators."""</span></span>
+<span id="cb1-7">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">or</span> n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&amp;</span> (n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>):</span>
+<span id="cb1-8">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">raise</span> <span class="pp" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">ValueError</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"n must be a power of two, at least 2"</span>)</span>
+<span id="cb1-9">    A <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> n<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">**</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> (<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> np.eye(n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb1-10">                 <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> np.eye(n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, k<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> np.eye(n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, k<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=-</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>))</span>
+<span id="cb1-11">    matrices, transfers <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> [A], []</span>
+<span id="cb1-12">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">while</span> n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>:</span>
+<span id="cb1-13">        P <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.zeros((n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">//</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>))</span>
+<span id="cb1-14">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> col <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">range</span>(P.shape[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>]):</span>
+<span id="cb1-15">            P[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> col:<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> col <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>, col] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> [<span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0.5</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0.5</span>]</span>
+<span id="cb1-16">        R <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> P.T</span>
+<span id="cb1-17">        matrices.append(R <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> matrices[<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> P)</span>
+<span id="cb1-18">        transfers.append(P)</span>
+<span id="cb1-19">        n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">//=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span></span>
+<span id="cb1-20">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> matrices, transfers</span>
+<span id="cb1-21"></span>
+<span id="cb1-22"></span>
+<span id="cb1-23"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> smooth(A, b, v, sweeps<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>, omega<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3</span>):</span>
+<span id="cb1-24">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> _ <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">range</span>(sweeps):</span>
+<span id="cb1-25">        v <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> v <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> omega <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> (b <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> A <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> v) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span> np.diag(A)</span>
+<span id="cb1-26">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> v</span>
+<span id="cb1-27"></span>
+<span id="cb1-28"></span>
+<span id="cb1-29"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">def</span> v_cycle(matrices, transfers, level, b, v):</span>
+<span id="cb1-30">    A <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> matrices[level]</span>
+<span id="cb1-31">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> level <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">len</span>(matrices) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>:</span>
+<span id="cb1-32">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> np.linalg.solve(A, b)</span>
+<span id="cb1-33">    v <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> smooth(A, b, v)</span>
+<span id="cb1-34">    P <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> transfers[level]</span>
+<span id="cb1-35">    coarse_rhs <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> P.T <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> (b <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> A <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> v)</span>
+<span id="cb1-36">    coarse_error <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> v_cycle(matrices, transfers, level <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>,</span>
+<span id="cb1-37">                           coarse_rhs, np.zeros_like(coarse_rhs))</span>
+<span id="cb1-38">    v <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> v <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> P <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> coarse_error</span>
+<span id="cb1-39">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> smooth(A, b, v)</span>
+<span id="cb1-40"></span>
+<span id="cb1-41"></span>
+<span id="cb1-42">n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">64</span></span>
+<span id="cb1-43">x <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.linspace(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb1-44">b <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.pi<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">**</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> np.sin(np.pi <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> x[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>:<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>])</span>
+<span id="cb1-45">matrices, transfers <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> hierarchy(n)</span>
+<span id="cb1-46">A <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> matrices[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>]</span>
+<span id="cb1-47">v <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.zeros(n <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb1-48">relative_residuals <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> [np.linalg.norm(b <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> A <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> v) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span> np.linalg.norm(b)]</span>
+<span id="cb1-49"></span>
+<span id="cb1-50"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> cycle <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">range</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">50</span>):</span>
+<span id="cb1-51">    v <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> v_cycle(matrices, transfers, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, b, v)</span>
+<span id="cb1-52">    relative_residuals.append(np.linalg.norm(b <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> A <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> v) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span> np.linalg.norm(b))</span>
+<span id="cb1-53">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> relative_residuals[<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1e-10</span>:</span>
+<span id="cb1-54">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">break</span></span>
+<span id="cb1-55"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">else</span>:</span>
+<span id="cb1-56">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">raise</span> <span class="pp" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">RuntimeError</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"V-cycles did not reach the residual tolerance"</span>)</span>
+<span id="cb1-57"></span>
+<span id="cb1-58"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Check the iterative result against a direct solve of the same discrete system.</span></span>
+<span id="cb1-59">np.testing.assert_allclose(v, np.linalg.solve(A, b), rtol<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1e-9</span>, atol<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1e-11</span>)</span>
+<span id="cb1-60"><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"V-cycles: </span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">len</span>(relative_residuals) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb1-61"><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"Final relative residual: </span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>relative_residuals[<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>]<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:.2e}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb1-62"><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"Maximum error against sin(pi*x): </span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>np<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">max</span>(np.<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">abs</span>(v <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> np.sin(np.pi<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span>x[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>:<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>])))<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:.2e}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb1-63"></span>
+<span id="cb1-64">fig, axes <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> plt.subplots(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>, figsize<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">9</span>, <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">3.4</span>))</span>
+<span id="cb1-65">xx <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.linspace(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">500</span>)</span>
+<span id="cb1-66">axes[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>].plot(xx, np.sin(np.pi <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> xx), color<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#8a8a8a"</span>, label<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Exact solution"</span>)</span>
+<span id="cb1-67">axes[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>].plot(x, np.r_[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, v, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>], <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"."</span>, color<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#235789"</span>, label<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Multigrid"</span>)</span>
+<span id="cb1-68">axes[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>].<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">set</span>(xlabel<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"x"</span>, ylabel<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"u(x)"</span>)</span>
+<span id="cb1-69">axes[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>].legend(frameon<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">False</span>)</span>
+<span id="cb1-70">axes[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>].semilogy(<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">range</span>(<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">len</span>(relative_residuals)), relative_residuals,</span>
+<span id="cb1-71">                 <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"o-"</span>, color<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"#235789"</span>, markersize<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4</span>)</span>
+<span id="cb1-72">axes[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>].<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">set</span>(xlabel<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Completed V-cycles"</span>, ylabel<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Relative residual"</span>)</span>
+<span id="cb1-73"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> ax <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">in</span> axes:</span>
+<span id="cb1-74">    ax.spines[[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"top"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"right"</span>]].set_visible(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">False</span>)</span>
+<span id="cb1-75">    ax.set_facecolor(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"none"</span>)</span>
+<span id="cb1-76">fig.patch.set_alpha(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>)</span>
+<span id="cb1-77">plt.rcParams[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"savefig.transparent"</span>] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span></span>
+<span id="cb1-78">fig.tight_layout()</span>
+<span id="cb1-79">plt.show()</span></code></pre></div></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>V-cycles: 10
+Final relative residual: 4.26e-11
+Maximum error against sin(pi*x): 2.01e-04</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-v-cycle-solution" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-v-cycle-solution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/index_files/figure-html/fig-v-cycle-solution-output-2.png" width="855" height="316" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-v-cycle-solution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: The multigrid approximation and exact solution, alongside the relative residual after each V-cycle.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The residual measures how well we solve the <strong>discrete</strong> system. Its convergence does not remove the finite-difference discretization error, which is why the error against <img src="https://latex.codecogs.com/png.latex?%5Csin(%5Cpi%20x)"> remains larger. This compact example uses dense matrices for readability; a large multigrid solver would use sparse matrices or stencil operations.</p>
+</section>
+<section id="closing-thoughts" class="level2">
+<h2 class="anchored" data-anchor-id="closing-thoughts">Closing Thoughts</h2>
+<p>Congrats! Now you can brag to your friends and family that you know what all the kids are talking about: multigrid methods. Still, this short series was just a primer on this subfield of numerical analysis, and there is much left unsaid about more “sophisticated” versions of this idea. However, they all rest on the same principles we discussed in these two posts. In future posts, I hope to delve deeper into multigrid and even talk about “neural” multigrid methods (one of my primary research interests).</p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-olson2015multigrid" class="csl-entry">
+Olson, Luke. 2015. <span>“Multigrid Methods: Geometric.”</span> In <em>Encyclopedia of Applied and Computational Mathematics</em>. Springer. <a href="https://doi.org/10.1007/978-3-540-70529-1_338">https://doi.org/10.1007/978-3-540-70529-1_338</a>.
+</div>
+</div>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{benanti2026,
+  author = {Benanti, Alex},
+  title = {Demystifying {Multigrid} {(Part} 2)},
+  date = {2026-09-06},
+  url = {https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/},
+  langid = {en}
+}
+</code></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-benanti2026" class="csl-entry quarto-appendix-citeas">
+Benanti, Alex. 2026. <span>“Demystifying Multigrid (Part 2).”</span>
+September 6. <a href="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/">https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/</a>.
+</div></div></section></div> ]]></description>
+  <category>Numerical Linear Algebra</category>
+  <category>Numerical PDEs</category>
+  <category>Multigrid Methods</category>
+  <category>Numerical Methods</category>
+  <guid>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/</guid>
+  <pubDate>Sun, 06 Sep 2026 04:00:00 GMT</pubDate>
+</item>
 <item>
   <title>Demystifying Multigrid (Part 1)</title>
   <dc:creator>Alex Benanti</dc:creator>
