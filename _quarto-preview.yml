@@ -1,0 +1,5 @@
+project:
+  output-dir: .quarto/pde-preview
+
+website:
+  draft-mode: visible

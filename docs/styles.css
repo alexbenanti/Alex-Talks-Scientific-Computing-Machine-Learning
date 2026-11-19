@@ -16,14 +16,17 @@ body.quarto-dark {
   --sciml-rule: #394453;
 }
 
-/* Keep the transparent eigenmode figure's labels readable in dark mode. */
+/* Keep transparent figures' labels readable in dark mode. */
 body.quarto-dark #fig-eigenmodes-n8 img,
 body.quarto-dark #fig-eigenmodes-n4 img,
 body.quarto-dark #fig-grid-hierarchy img,
 body.quarto-dark #fig-prolongation img,
 body.quarto-dark #fig-restriction img,
 body.quarto-dark #fig-v-cycle img,
-body.quarto-dark #fig-v-cycle-solution img {
+body.quarto-dark #fig-v-cycle-solution img,
+body.quarto-dark #fig-transport img,
+body.quarto-dark #fig-variable-transport img,
+body.quarto-dark #fig-burgers img {
   filter: invert(1) hue-rotate(180deg);
 }
 

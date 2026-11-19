@@ -10,7 +10,233 @@
 <atom:link href="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/index.xml" rel="self" type="application/rss+xml"/>
 <description>Notes on PDEs, numerical methods, optimization, and scientific machine learning.</description>
 <generator>quarto-1.10.18</generator>
-<lastBuildDate>Sun, 06 Sep 2026 04:00:00 GMT</lastBuildDate>
+<lastBuildDate>Thu, 19 Nov 2026 05:00:00 GMT</lastBuildDate>
+<item>
+  <title>Solving First-Order PDEs with the Method of Characteristics</title>
+  <dc:creator>Alex Benanti</dc:creator>
+  <link>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-11-19-solving-first-order-pdes-with-the-method-of-characteristics/</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p>In <a href="../../posts/2026-07-18-what-is-a-pde/index.html">What Is a PDE?</a>, we checked whether a given function satisfied a partial differential equation. However, we left a key question open – how do we FIND said function that satisfies a given PDE? This is a question I aim to demystify in my analytical series here, starting with first-order PDEs.</p>
+<p>For an important class of first-order PDEs, the starting point is something you may recall from Calc I: the chain rule. If we follow the right curves through space and time, the PDE becomes a system of ordinary differential equations. This is the <strong>method of characteristics</strong>.</p>
+<p>We will use it to solve two transport problems explicitly, then explore a nonlinear example where a smooth initial profile develops an infinite slope. To fully appreciate the work, I advise you to be familiar with partial derivatives, the chain rule, and basic ODEs such as <img src="https://latex.codecogs.com/png.latex?X'=c"> and <img src="https://latex.codecogs.com/png.latex?X'=X">.</p>
+<section id="start-with-a-moving-profile" class="level2">
+<h2 class="anchored" data-anchor-id="start-with-a-moving-profile">Start with a moving profile</h2>
+<p>Imagine a temperature pattern carried along a straight pipe at a constant speed <img src="https://latex.codecogs.com/png.latex?c">, with diffusion and heat exchange neglected. If <img src="https://latex.codecogs.com/png.latex?u(x,t)"> is the temperature at position <img src="https://latex.codecogs.com/png.latex?x"> and time <img src="https://latex.codecogs.com/png.latex?t">, a simple model is</p>
+<p><span id="eq-transport"><img src="https://latex.codecogs.com/png.latex?%0Au_t+c%20u_x=0,%5Cqquad%20x%5Cin%5Cmathbb%7BR%7D,%5Cquad%20t%5Cgeq%200.%0A%5Ctag%7B1%7D"></span></p>
+<p>This equation is <strong>first order</strong> because its highest derivatives are <img src="https://latex.codecogs.com/png.latex?u_t"> and <img src="https://latex.codecogs.com/png.latex?u_x">. To specify the initial temperature pattern, we also prescribe</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Au(x,0)=f(x).%0A"></p>
+<p>Here <img src="https://latex.codecogs.com/png.latex?f"> is a known, continuously differentiable function. We use the entire real line so that there are no spatial boundaries to handle yet.</p>
+<p>The equation tells us how spatial variation and temporal change are related. At a fixed position, the temperature may change as the pattern passes. But what would someone moving with the pattern measure?</p>
+<section id="follow-a-curve-and-apply-the-chain-rule" class="level3">
+<h3 class="anchored" data-anchor-id="follow-a-curve-and-apply-the-chain-rule">Follow a curve and apply the chain rule</h3>
+<p>Let <img src="https://latex.codecogs.com/png.latex?X(t)"> be the position of a moving observer. The value they measure is</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AU(t)=u(X(t),t).%0A"></p>
+<p>Unlike <img src="https://latex.codecogs.com/png.latex?u">, which depends on two variables, <img src="https://latex.codecogs.com/png.latex?U"> depends only on time. The chain rule gives</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cfrac%7BdU%7D%7Bdt%7D%0A=u_x(X(t),t)%5Cfrac%7BdX%7D%7Bdt%7D+u_t(X(t),t).%0A"></p>
+<p>If we choose <img src="https://latex.codecogs.com/png.latex?X'(t)=c">, the right-hand side is precisely the left-hand side of Equation&nbsp;1. Therefore,</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cfrac%7BdX%7D%7Bdt%7D=c,%5Cqquad%20%5Cfrac%7BdU%7D%7Bdt%7D=0.%0A"></p>
+<p>We have turned the PDE into two ODEs! The second equation says that the value stays constant along the chosen path. These paths in the <img src="https://latex.codecogs.com/png.latex?(x,t)"> plane are called <strong>characteristics</strong>.</p>
+</section>
+<section id="use-the-initial-data" class="level3">
+<h3 class="anchored" data-anchor-id="use-the-initial-data">Use the initial data</h3>
+<p>Label each path by its starting position <img src="https://latex.codecogs.com/png.latex?%5Cxi"> (the Greek letter xi). Then</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AX(0)=%5Cxi,%5Cqquad%20U(0)=f(%5Cxi).%0A"></p>
+<p>Integrating the ODEs gives</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AX(t)=%5Cxi+ct,%5Cqquad%20U(t)=f(%5Cxi).%0A"></p>
+<p>To find the solution at a particular point <img src="https://latex.codecogs.com/png.latex?(x,t)">, identify which characteristic reaches it. Solving <img src="https://latex.codecogs.com/png.latex?x=%5Cxi+ct"> gives <img src="https://latex.codecogs.com/png.latex?%5Cxi=x-ct">, and hence</p>
+<p><span id="eq-transport-solution"><img src="https://latex.codecogs.com/png.latex?%0A%5Cboxed%7Bu(x,t)=f(x-ct).%7D%0A%5Ctag%7B2%7D"></span></p>
+<p>The value at <img src="https://latex.codecogs.com/png.latex?(x,t)"> is the initial value at <img src="https://latex.codecogs.com/png.latex?x-ct">. For <img src="https://latex.codecogs.com/png.latex?c%3E0">, the profile moves to the right; for <img src="https://latex.codecogs.com/png.latex?c%3C0">, it moves to the left. Its shape and amplitude stay the same.</p>
+<p>For example, with <img src="https://latex.codecogs.com/png.latex?c=1"> and <img src="https://latex.codecogs.com/png.latex?f(x)=e%5E%7B-x%5E2%7D">,</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Au(x,t)=e%5E%7B-(x-t)%5E2%7D.%0A"></p>
+<p>The peak starts at <img src="https://latex.codecogs.com/png.latex?x=0"> and moves along <img src="https://latex.codecogs.com/png.latex?x=t">.</p>
+<div id="fig-transport" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Left: parallel characteristic lines in the space-time plane. Right: Gaussian profiles at times zero, 0.75, and 1.5, with their peaks moving right at unit speed.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-transport-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-11-19-solving-first-order-pdes-with-the-method-of-characteristics/images/transport.png" class="img-fluid figure-img" alt="Left: parallel characteristic lines in the space-time plane. Right: Gaussian profiles at times zero, 0.75, and 1.5, with their peaks moving right at unit speed.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-transport-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: For constant speed <img src="https://latex.codecogs.com/png.latex?c=1">, parallel characteristics carry the Gaussian profile to the right without changing its shape.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="check-the-answer" class="level3">
+<h3 class="anchored" data-anchor-id="check-the-answer">Check the answer</h3>
+<p>An explicit formula is easy to verify:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Au_t=-c%20f'(x-ct),%5Cqquad%20u_x=f'(x-ct).%0A"></p>
+<p>Thus <img src="https://latex.codecogs.com/png.latex?u_t+c%20u_x=0">, and at <img src="https://latex.codecogs.com/png.latex?t=0"> we recover <img src="https://latex.codecogs.com/png.latex?u(x,0)=f(x)">. Both the PDE and the initial condition hold.</p>
+</section>
+</section>
+<section id="a-general-recipe" class="level2">
+<h2 class="anchored" data-anchor-id="a-general-recipe">A general recipe</h2>
+<p>The same calculation works for equations of the form</p>
+<p><span id="eq-quasilinear"><img src="https://latex.codecogs.com/png.latex?%0Au_t+a(x,t,u)u_x=b(x,t,u).%0A%5Ctag%7B3%7D"></span></p>
+<p>This is a <strong>quasilinear</strong> first-order equation: the first derivatives appear linearly, but their coefficients may depend on <img src="https://latex.codecogs.com/png.latex?u">. Linear transport is a special case. A fully nonlinear equation such as <img src="https://latex.codecogs.com/png.latex?u_t+(u_x)%5E2=0"> needs an extended characteristic system, which we will leave for another post.</p>
+<p>Writing <img src="https://latex.codecogs.com/png.latex?X=X(%5Cxi,t)"> and <img src="https://latex.codecogs.com/png.latex?U=U(%5Cxi,t)"> to show the starting-point label explicitly, the characteristic equations are</p>
+<p><span id="eq-characteristics"><img src="https://latex.codecogs.com/png.latex?%0A%5Cboxed%7B%0A%5Cbegin%7Baligned%7D%0A%5Cfrac%7BdX%7D%7Bdt%7D&amp;=a(X,t,U),%20&amp;%20X(%5Cxi,0)&amp;=%5Cxi,%5C%5C%0A%5Cfrac%7BdU%7D%7Bdt%7D&amp;=b(X,t,U),%20&amp;%20U(%5Cxi,0)&amp;=f(%5Cxi).%0A%5Cend%7Baligned%7D%7D%0A%5Ctag%7B4%7D"></span></p>
+<p>Each derivative here is taken with <img src="https://latex.codecogs.com/png.latex?%5Cxi"> fixed. The first ODE determines the path; the second determines how the value changes along it. In particular, <strong>the value is constant along a characteristic when <img src="https://latex.codecogs.com/png.latex?b(X,t,U)=0"> all along that path</strong>.</p>
+<p>The practical steps are:</p>
+<ol type="1">
+<li>Solve the characteristic ODEs using the initial data.</li>
+<li>Solve <img src="https://latex.codecogs.com/png.latex?X(%5Cxi,t)=x"> for the starting label <img src="https://latex.codecogs.com/png.latex?%5Cxi">, if possible.</li>
+<li>Substitute that label into <img src="https://latex.codecogs.com/png.latex?U(%5Cxi,t)"> to recover <img src="https://latex.codecogs.com/png.latex?u(x,t)">.</li>
+<li>Check the PDE, the data, and the region where the construction is valid.</li>
+</ol>
+<p>This same general framework is developed in <span class="citation" data-cites="stanfordcharacteristics">Stanford University (n.d.)</span> and is explained in further detail there.</p>
+</section>
+<section id="variable-speed-and-a-changing-amplitude" class="level2">
+<h2 class="anchored" data-anchor-id="variable-speed-and-a-changing-amplitude">Variable speed and a changing amplitude</h2>
+<p>Now consider, in dimensionless variables,</p>
+<p><span id="eq-variable-transport"><img src="https://latex.codecogs.com/png.latex?%0Au_t+xu_x=-u,%5Cqquad%20u(x,0)=f(x).%0A%5Ctag%7B5%7D"></span></p>
+<p>Two things have changed: the transport speed is now <img src="https://latex.codecogs.com/png.latex?x">, and the right-hand side makes the value decay along a moving path. The characteristic equations become</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cfrac%7BdX%7D%7Bdt%7D=X,%5Cqquad%20%5Cfrac%7BdU%7D%7Bdt%7D=-U.%0A"></p>
+<p>Using <img src="https://latex.codecogs.com/png.latex?X(0)=%5Cxi"> and <img src="https://latex.codecogs.com/png.latex?U(0)=f(%5Cxi)"> gives</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AX(%5Cxi,t)=%5Cxi%20e%5Et,%5Cqquad%20U(%5Cxi,t)=e%5E%7B-t%7Df(%5Cxi).%0A"></p>
+<p>This also includes <img src="https://latex.codecogs.com/png.latex?%5Cxi=0">, whose characteristic remains at <img src="https://latex.codecogs.com/png.latex?x=0">. For any finite <img src="https://latex.codecogs.com/png.latex?t">, we can invert the position formula:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cxi=xe%5E%7B-t%7D.%0A"></p>
+<p>Consequently,</p>
+<p><span id="eq-variable-solution"><img src="https://latex.codecogs.com/png.latex?%0A%5Cboxed%7Bu(x,t)=e%5E%7B-t%7Df(xe%5E%7B-t%7D).%7D%0A%5Ctag%7B6%7D"></span></p>
+<p>With the same initial Gaussian <img src="https://latex.codecogs.com/png.latex?f(x)=e%5E%7B-x%5E2%7D">, this becomes</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Au(x,t)=e%5E%7B-t%7D%5Cexp%5C!%5Cleft(-x%5E2e%5E%7B-2t%7D%5Cright).%0A"></p>
+<p>The profile spreads because points farther from the origin move faster, while its peak decreases by the factor <img src="https://latex.codecogs.com/png.latex?e%5E%7B-t%7D">. The two effects come from different characteristic equations.</p>
+<div id="fig-variable-transport" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Left: curved characteristics spreading away from the stationary path at x equals zero. Right: Gaussian profiles that become wider and lower as time increases.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-variable-transport-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-11-19-solving-first-order-pdes-with-the-method-of-characteristics/images/variable-transport.png" class="img-fluid figure-img" alt="Left: curved characteristics spreading away from the stationary path at x equals zero. Right: Gaussian profiles that become wider and lower as time increases.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-variable-transport-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: For <img src="https://latex.codecogs.com/png.latex?u_t+xu_x=-u">, characteristics move away from the origin, while the Gaussian profile broadens and decreases in height.
+</figcaption>
+</figure>
+</div>
+<p>To verify the formula, abbreviate <img src="https://latex.codecogs.com/png.latex?%5Ceta=xe%5E%7B-t%7D">. Then</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cbegin%7Baligned%7D%0Au_t&amp;=-e%5E%7B-t%7Df(%5Ceta)-e%5E%7B-t%7D%5Ceta%20f'(%5Ceta),%5C%5C%0Axu_x&amp;=e%5E%7B-t%7D%5Ceta%20f'(%5Ceta).%0A%5Cend%7Baligned%7D%0A"></p>
+<p>Adding cancels the terms involving <img src="https://latex.codecogs.com/png.latex?f'">, leaving <img src="https://latex.codecogs.com/png.latex?u_t+xu_x=-u">. At <img src="https://latex.codecogs.com/png.latex?t=0">, the solution again equals <img src="https://latex.codecogs.com/png.latex?f(x)">.</p>
+<p>Variable coefficients and source terms change the ODEs, but the underlying chain-rule argument survives. For further worked examples of these variations, see <span class="citation" data-cites="ivriifirstorder">Ivrii (n.d.)</span>.</p>
+</section>
+<section id="when-the-solution-determines-its-own-speed" class="level2">
+<h2 class="anchored" data-anchor-id="when-the-solution-determines-its-own-speed">When the solution determines its own speed</h2>
+<p>The <strong>inviscid Burgers equation</strong> is</p>
+<p><span id="eq-burgers"><img src="https://latex.codecogs.com/png.latex?%0Au_t+u%20u_x=0,%5Cqquad%20u(x,0)=f(x).%0A%5Ctag%7B7%7D"></span></p>
+<p>It resembles constant-speed transport, but now <img src="https://latex.codecogs.com/png.latex?u"> itself is the transport speed. The characteristic equations are coupled:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cfrac%7BdX%7D%7Bdt%7D=U,%5Cqquad%20%5Cfrac%7BdU%7D%7Bdt%7D=0.%0A"></p>
+<p>The second equation still gives <img src="https://latex.codecogs.com/png.latex?U(%5Cxi,t)=f(%5Cxi)">. That makes the speed along each path constant, so</p>
+<p><span id="eq-burgers-parametric"><img src="https://latex.codecogs.com/png.latex?%0A%5Cboxed%7BX(%5Cxi,t)=%5Cxi+t%20f(%5Cxi),%5Cqquad%20U(%5Cxi,t)=f(%5Cxi).%7D%0A%5Ctag%7B8%7D"></span></p>
+<p>Each characteristic is a straight line, but different starting values produce different speeds. The lines need not be parallel.</p>
+<p>To express the answer in terms of <img src="https://latex.codecogs.com/png.latex?x"> and <img src="https://latex.codecogs.com/png.latex?t">, we must solve</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Ax=%5Cxi+t%20f(%5Cxi).%0A"></p>
+<p>Even if we cannot isolate <img src="https://latex.codecogs.com/png.latex?%5Cxi"> using elementary functions, Equation&nbsp;8 is an exact parametric description. Equivalently, wherever the characteristic map is invertible,</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Au(x,t)=f%5Cbigl(x-tu(x,t)%5Cbigr).%0A"></p>
+<p>This is an <strong>implicit</strong> solution: the unknown appears on both sides. Solving a PDE analytically can produce a useful exact relation without producing an explicit elementary formula.</p>
+<section id="a-smooth-profile-that-becomes-infinitely-steep" class="level3">
+<h3 class="anchored" data-anchor-id="a-smooth-profile-that-becomes-infinitely-steep">A smooth profile that becomes infinitely steep</h3>
+<p>Take</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Af(x)=-%5Csin%20x.%0A"></p>
+<p>Then</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Ax=%5Cxi-t%5Csin%5Cxi,%5Cqquad%20u(x,t)=-%5Csin%5Cxi.%0A"></p>
+<p>Near the origin, values to the left are positive and move right; values to the right are negative and move left. The profile compresses. We can find exactly when smoothness fails by differentiating the position map:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0A%5Cfrac%7B%5Cpartial%20X%7D%7B%5Cpartial%5Cxi%7D=1-t%5Ccos%5Cxi.%0A"></p>
+<p>For <img src="https://latex.codecogs.com/png.latex?0%5Cleq%20t%3C1">, this derivative is at least <img src="https://latex.codecogs.com/png.latex?1-t%3E0">. Moreover, <img src="https://latex.codecogs.com/png.latex?X(%5Cxi,t)-%5Cxi"> is bounded, so <img src="https://latex.codecogs.com/png.latex?X"> ranges over the whole real line as <img src="https://latex.codecogs.com/png.latex?%5Cxi"> does. Thus every <img src="https://latex.codecogs.com/png.latex?x"> has exactly one starting label, and the formula defines a smooth solution.</p>
+<p>To see what happens to the slope, differentiate <img src="https://latex.codecogs.com/png.latex?u(X(%5Cxi,t),t)=f(%5Cxi)"> with respect to <img src="https://latex.codecogs.com/png.latex?%5Cxi">:</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Au_x(X(%5Cxi,t),t)%5C,X_%5Cxi(%5Cxi,t)=f'(%5Cxi).%0A"></p>
+<p>For general smooth data, this gives</p>
+<p><span id="eq-burgers-slope"><img src="https://latex.codecogs.com/png.latex?%0Au_x(X(%5Cxi,t),t)=%5Cfrac%7Bf'(%5Cxi)%7D%7B1+t%20f'(%5Cxi)%7D.%0A%5Ctag%7B9%7D"></span></p>
+<p>For our sine profile, the characteristic starting at <img src="https://latex.codecogs.com/png.latex?%5Cxi=0"> stays at <img src="https://latex.codecogs.com/png.latex?x=0">, and</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Au_x(0,t)=-%5Cfrac%7B1%7D%7B1-t%7D%5Clongrightarrow-%5Cinfty%0A%5Cqquad%5Ctext%7Bas%20%7Dt%5Cto1%5E-.%0A"></p>
+<p>The amplitude remains bounded by <img src="https://latex.codecogs.com/png.latex?1">, but the slope becomes unbounded. The classical solution therefore breaks down at <img src="https://latex.codecogs.com/png.latex?t=1">.</p>
+<div id="fig-burgers" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Left: nonparallel straight characteristics converging near the origin, with the first gradient blow-up time t equals one marked by a dashed line. Right: initially sinusoidal profiles developing an increasingly steep central slope at times zero, 0.5, 0.9, and 0.99.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-burgers-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-11-19-solving-first-order-pdes-with-the-method-of-characteristics/images/burgers.png" class="img-fluid figure-img" alt="Left: nonparallel straight characteristics converging near the origin, with the first gradient blow-up time t equals one marked by a dashed line. Right: initially sinusoidal profiles developing an increasingly steep central slope at times zero, 0.5, 0.9, and 0.99.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-burgers-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Burgers characteristics compress near the origin. The profiles shown are exact parametric samples at times strictly before <img src="https://latex.codecogs.com/png.latex?t=1">, when the central slope becomes unbounded.
+</figcaption>
+</figure>
+</div>
+<p>At <img src="https://latex.codecogs.com/png.latex?t=1">, the characteristic map loses its differentiable inverse at the origin. For <img src="https://latex.codecogs.com/png.latex?t%3E1">, it folds and assigns multiple values to some positions. That folded construction is no longer a classical solution <img src="https://latex.codecogs.com/png.latex?u(x,t)">.</p>
+<p>Continuing beyond this point requires a broader notion of solution. In conservation form,</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Au_t+%5Cleft(%5Cfrac%7Bu%5E2%7D%7B2%7D%5Cright)_x=0,%0A"></p>
+<p>Burgers’ equation admits weak solutions containing shocks. An entropy condition selects the physically relevant continuation. That is a separate topic; <span class="citation" data-cites="clawpackburgers">Clawpack contributors (n.d.)</span> develops the shock and entropy picture in detail.</p>
+</section>
+</section>
+<section id="why-the-location-of-the-data-matters" class="level2">
+<h2 class="anchored" data-anchor-id="why-the-location-of-the-data-matters">Why the location of the data matters</h2>
+<p>So far, we have supplied data along <img src="https://latex.codecogs.com/png.latex?t=0">. Each characteristic starts at one point on that line, allowing us to assign a value to every path.</p>
+<p>Suppose instead that, for constant-speed transport, we prescribe</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Au(ct,t)=g(t).%0A"></p>
+<p>The curve <img src="https://latex.codecogs.com/png.latex?x=ct"> is itself a characteristic. Since <img src="https://latex.codecogs.com/png.latex?u"> must be constant along it, a nonconstant <img src="https://latex.codecogs.com/png.latex?g"> is incompatible with the PDE. If <img src="https://latex.codecogs.com/png.latex?g(t)=K"> is constant, it fixes only the value on that one path. Every solution <img src="https://latex.codecogs.com/png.latex?u(x,t)=F(x-ct)"> with <img src="https://latex.codecogs.com/png.latex?F(0)=K"> satisfies those data, so the neighboring values remain undetermined.</p>
+<p>This is why we look for <strong>noncharacteristic data</strong>: the curve carrying the data should cross the characteristic direction rather than run tangent to it.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Optional detail: the noncharacteristic condition">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Optional detail: the noncharacteristic condition
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>For</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0AA(x,t,u)u_x+B(x,t,u)u_t=C(x,t,u),%0A"></p>
+<p>suppose data <img src="https://latex.codecogs.com/png.latex?u=g(r)"> are prescribed along <img src="https://latex.codecogs.com/png.latex?(x_0(r),t_0(r))">. The characteristic direction in the <img src="https://latex.codecogs.com/png.latex?(x,t)"> plane is <img src="https://latex.codecogs.com/png.latex?(A,B)">. The noncharacteristic condition is</p>
+<p><img src="https://latex.codecogs.com/png.latex?%0Ax_0'(r)B-t_0'(r)A%5Cneq0,%0A"></p>
+<p>with <img src="https://latex.codecogs.com/png.latex?A"> and <img src="https://latex.codecogs.com/png.latex?B"> evaluated at <img src="https://latex.codecogs.com/png.latex?(x_0(r),t_0(r),g(r))">. This determinant says that the data curve and the characteristic direction are linearly independent. Under suitable smoothness assumptions, it permits a local characteristic construction; it does not guarantee a smooth solution for all time <span class="citation" data-cites="stanfordcharacteristics">(Stanford University, n.d.)</span>.</p>
+<p>For Equation&nbsp;3 with data on <img src="https://latex.codecogs.com/png.latex?t=0">, we have <img src="https://latex.codecogs.com/png.latex?A=a">, <img src="https://latex.codecogs.com/png.latex?B=1">, <img src="https://latex.codecogs.com/png.latex?x_0(r)=r">, and <img src="https://latex.codecogs.com/png.latex?t_0(r)=0">, so the determinant is <img src="https://latex.codecogs.com/png.latex?1">.</p>
+</div>
+</div>
+</div>
+<p>On a bounded interval, the same geometry tells us which boundary data are needed. For <img src="https://latex.codecogs.com/png.latex?u_t+c%20u_x=0"> on <img src="https://latex.codecogs.com/png.latex?0%3Cx%3CL"> with <img src="https://latex.codecogs.com/png.latex?c%3E0">, characteristics enter through <img src="https://latex.codecogs.com/png.latex?x=0">. We prescribe inflow data there as well as the initial profile; the value at <img src="https://latex.codecogs.com/png.latex?x=L"> is determined by the solution. For a classical solution, initial and boundary data must agree appropriately where they meet.</p>
+</section>
+<section id="what-characteristics-give-us" class="level2">
+<h2 class="anchored" data-anchor-id="what-characteristics-give-us">What characteristics give us</h2>
+<p>The method works by finding paths along which partial derivatives combine into an ordinary derivative. Initial data label those paths, and solving the ODEs tells us how both position and solution value evolve.</p>
+<p>There are two checks to keep in view: the ODE solutions must continue to exist, and their characteristic map must remain invertible with enough regularity. The linear examples passed both checks for every finite forward time. The Burgers example failed the second at <img src="https://latex.codecogs.com/png.latex?t=1">.</p>
+<p>For scientific computing, these analytical solutions also provide useful benchmarks. A numerical transport method should reproduce the direction, speed, and shape of a translated profile. For Burgers’ equation, it should capture steepening before the classical solution breaks down. Having an exact solution makes those comparisons much more informative.</p>
+<p>The figures evaluate the derived formulas directly; they do not use a numerical PDE solver. Their source is available in <a href="plot_characteristics.py">plot_characteristics.py</a>.</p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-clawpackburgers" class="csl-entry">
+Clawpack contributors. n.d. <em><span>Burgers</span>’ Equation</em>. Riemann Problems and Jupyter Solutions. Accessed November 19, 2026. <a href="https://www.clawpack.org/riemann_book/html/Burgers.html">https://www.clawpack.org/riemann_book/html/Burgers.html</a>.
+</div>
+<div id="ref-ivriifirstorder" class="csl-entry">
+Ivrii, Victor. n.d. <em>First Order <span>PDEs</span></em>. Partial Differential Equations, Section 2.1, University of Toronto. Accessed November 19, 2026. <a href="https://www.math.utoronto.ca/ivrii/PDE-textbook/Chapter2/S2.1.html">https://www.math.utoronto.ca/ivrii/PDE-textbook/Chapter2/S2.1.html</a>.
+</div>
+<div id="ref-stanfordcharacteristics" class="csl-entry">
+Stanford University. n.d. <em>First-Order Equations: Method of Characteristics</em>. Math 220A course notes. Accessed November 19, 2026. <a href="https://web.stanford.edu/class/math220a/handouts/firstorder.pdf">https://web.stanford.edu/class/math220a/handouts/firstorder.pdf</a>.
+</div>
+</div>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a><div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{benanti2026,
+  author = {Benanti, Alex},
+  title = {Solving {First-Order} {PDEs} with the {Method} of
+    {Characteristics}},
+  date = {2026-11-19},
+  url = {https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-11-19-solving-first-order-pdes-with-the-method-of-characteristics/},
+  langid = {en}
+}
+</code></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-benanti2026" class="csl-entry quarto-appendix-citeas">
+Benanti, Alex. 2026. <span>“Solving First-Order PDEs with the Method of
+Characteristics.”</span> November 19. <a href="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-11-19-solving-first-order-pdes-with-the-method-of-characteristics/">https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-11-19-solving-first-order-pdes-with-the-method-of-characteristics/</a>.
+</div></div></section></div> ]]></description>
+  <category>PDEs</category>
+  <category>Analytical Methods</category>
+  <guid>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-11-19-solving-first-order-pdes-with-the-method-of-characteristics/</guid>
+  <pubDate>Thu, 19 Nov 2026 05:00:00 GMT</pubDate>
+  <media:content url="https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-11-19-solving-first-order-pdes-with-the-method-of-characteristics/images/transport.png" medium="image" type="image/png" height="54" width="144"/>
+</item>
 <item>
   <title>Demystifying Multigrid (Part 2)</title>
   <dc:creator>Alex Benanti</dc:creator>

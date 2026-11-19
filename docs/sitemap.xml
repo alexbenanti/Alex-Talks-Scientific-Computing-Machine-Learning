@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-26-demystifying-multigrid/index.html</loc>
-    <lastmod>2026-09-06T22:08:44.606Z</lastmod>
-  </url>
-  <url>
-    <loc>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/index.html</loc>
-    <lastmod>2026-09-06T22:08:44.602Z</lastmod>
-  </url>
-  <url>
-    <loc>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/about.html</loc>
-    <lastmod>2026-09-06T16:03:24.197Z</lastmod>
+    <loc>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/index.html</loc>
+    <lastmod>2026-11-19T18:42:39.186Z</lastmod>
   </url>
   <url>
     <loc>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-18-what-is-a-pde/index.html</loc>
-    <lastmod>2026-09-06T22:08:44.605Z</lastmod>
+    <lastmod>2026-11-19T18:42:39.186Z</lastmod>
   </url>
   <url>
-    <loc>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-09-06-demystifying-multigrid-part-2/index.html</loc>
-    <lastmod>2026-09-06T22:09:28.377Z</lastmod>
+    <loc>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/about.html</loc>
+    <lastmod>2026-11-19T18:42:39.119Z</lastmod>
+  </url>
+  <url>
+    <loc>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/index.html</loc>
+    <lastmod>2026-11-19T18:42:39.184Z</lastmod>
+  </url>
+  <url>
+    <loc>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-07-26-demystifying-multigrid/index.html</loc>
+    <lastmod>2026-11-19T18:42:39.186Z</lastmod>
+  </url>
+  <url>
+    <loc>https://alexbenanti.github.io/Alex-Talks-Scientific-Computing-Machine-Learning/posts/2026-11-19-solving-first-order-pdes-with-the-method-of-characteristics/index.html</loc>
+    <lastmod>2026-11-19T19:16:16.446Z</lastmod>
   </url>
 </urlset>
